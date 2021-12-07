@@ -6,6 +6,7 @@ export const exampleValue = () => 'password';
 export const exampleValue2 = () => 'password2';
 export const supportsUnique = false;
 export const supportsNullInput = true;
+export const supportsDbMap = true;
 export const fieldName = 'password';
 export const subfieldName = 'isSet';
 export const skipCreateTest = true;
@@ -60,7 +61,6 @@ export const crudTests = (keystoneTestWrapper: any) => {
       await expect(
         context.query.Test.createOne({
           data: { passwordRejectCommon: 'password' },
-          query: ``,
         })
       ).rejects.toMatchInlineSnapshot(`
               [GraphQLError: You provided invalid data for this operation.

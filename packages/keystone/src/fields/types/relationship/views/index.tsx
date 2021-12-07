@@ -25,26 +25,26 @@ import { RelationshipSelect } from './RelationshipSelect';
 
 function LinkToRelatedItems({
   itemId,
-  isDoubleSided,
   value,
   list,
+  refFieldKey,
 }: {
   itemId: string | null;
-  isDoubleSided: boolean;
   value: FieldProps<typeof controller>['value'] & { kind: 'many' | 'one' };
   list: ListMeta;
+  refFieldKey?: string;
 }) {
   function constructQuery({
-    isDoubleSided,
+    refFieldKey,
     itemId,
     value,
   }: {
-    isDoubleSided?: boolean;
+    refFieldKey?: string;
     itemId: string | null;
     value: FieldProps<typeof controller>['value'] & { kind: 'many' | 'one' };
   }) {
-    if (isDoubleSided && itemId) {
-      return `!assignedTo_matches="${itemId}"`;
+    if (!!refFieldKey && itemId) {
+      return `!${refFieldKey}_matches="${itemId}"`;
     }
     return `!id_in="${(value?.value as { id: string; label: string }[])
       .slice(0, 100)
@@ -58,7 +58,7 @@ function LinkToRelatedItems({
   } as const;
 
   if (value.kind === 'many') {
-    const query = constructQuery({ isDoubleSided, value, itemId });
+    const query = constructQuery({ refFieldKey, value, itemId });
     return (
       <Button {...commonProps} as={Link} href={`/${list.path}?${query}`}>
         View related {list.plural}
@@ -131,8 +131,8 @@ export const Field = ({
         <FieldLegend>{field.label}</FieldLegend>
         <Cards
           forceValidation={forceValidation}
-          field={field as any}
-          id={value.id!}
+          field={field}
+          id={value.id}
           value={value}
           onChange={onChange}
           foreignList={foreignList}
@@ -155,6 +155,8 @@ export const Field = ({
       </Stack>
     );
   }
+
+  const authenticatedItem = keystone.authenticatedItem;
 
   return (
     <FieldContainer as="fieldset">
@@ -206,33 +208,34 @@ export const Field = ({
                   Create related {foreignList.singular}
                 </Button>
               )}
-              {keystone.authenticatedItem.state === 'authenticated' &&
-                keystone.authenticatedItem.listKey === field.refListKey && (
+              {authenticatedItem.state === 'authenticated' &&
+                authenticatedItem.listKey === field.refListKey &&
+                (value.kind === 'many'
+                  ? value.value.find(x => x.id === authenticatedItem.id) === undefined
+                  : value.value?.id !== authenticatedItem.id) && (
                   <Button
                     size="small"
                     isDisabled={onChange === undefined}
                     onClick={() => {
-                      if (keystone.authenticatedItem.state === 'authenticated') {
-                        const val = {
-                          label: keystone.authenticatedItem.label,
-                          id: keystone.authenticatedItem.id,
-                        };
-                        if (value.kind === 'many') {
-                          onChange({
-                            ...value,
-                            value: [...value.value, val],
-                          });
-                        } else {
-                          onChange({
-                            ...value,
-                            value: val,
-                          });
-                        }
+                      const val = {
+                        label: authenticatedItem.label,
+                        id: authenticatedItem.id,
+                      };
+                      if (value.kind === 'many') {
+                        onChange({
+                          ...value,
+                          value: [...value.value, val],
+                        });
+                      } else {
+                        onChange({
+                          ...value,
+                          value: val,
+                        });
                       }
                     }}
                   >
                     {value.kind === 'many' ? 'Add ' : 'Set as '}
-                    {keystone.authenticatedItem.label}
+                    {authenticatedItem.label}
                   </Button>
                 )}
               {!!(value.kind === 'many'
@@ -240,7 +243,7 @@ export const Field = ({
                 : value.kind === 'one' && value.value) && (
                 <LinkToRelatedItems
                   itemId={value.id}
-                  isDoubleSided={!!field.refFieldKey}
+                  refFieldKey={field.refFieldKey}
                   list={foreignList}
                   value={value}
                 />
@@ -281,7 +284,7 @@ export const Cell: CellComponent<typeof controller> = ({ field, item }) => {
   const list = useList(field.refListKey);
   const { colors } = useTheme();
 
-  if (field.display.mode === 'count') {
+  if (field.display === 'count') {
     const count = item[`${field.path}Count`] ?? 0;
     return (
       <CellContainer>
@@ -357,32 +360,27 @@ type CardsRelationshipValue = {
   itemBeingCreated: boolean;
   initialIds: ReadonlySet<string>;
   currentIds: ReadonlySet<string>;
+  displayOptions: CardsDisplayModeOptions;
 };
 type CountRelationshipValue = {
   kind: 'count';
   id: null | string;
   count: number;
 };
+type CardsDisplayModeOptions = {
+  cardFields: readonly string[];
+  linkToItem: boolean;
+  removeMode: 'disconnect' | 'none';
+  inlineCreate: { fields: readonly string[] } | null;
+  inlineEdit: { fields: readonly string[] } | null;
+  inlineConnect: boolean;
+};
 
 type RelationshipController = FieldController<
   ManyRelationshipValue | SingleRelationshipValue | CardsRelationshipValue | CountRelationshipValue,
   string
 > & {
-  display:
-    | {
-        mode: 'select';
-        refLabelField: string;
-      }
-    | {
-        mode: 'cards';
-        cardFields: string[];
-        linkToItem: boolean;
-        removeMode: 'disconnect' | 'none';
-        inlineCreate: { fields: string[] } | null;
-        inlineEdit: { fields: string[] } | null;
-        inlineConnect: boolean;
-      }
-    | { mode: 'count' };
+  display: 'count' | 'cards-or-select';
   listKey: string;
   refListKey: string;
   refFieldKey?: string;
@@ -404,11 +402,11 @@ export const controller = (
         }
       | {
           displayMode: 'cards';
-          cardFields: string[];
+          cardFields: readonly string[];
           linkToItem: boolean;
           removeMode: 'disconnect' | 'none';
-          inlineCreate: { fields: string[] } | null;
-          inlineEdit: { fields: string[] } | null;
+          inlineCreate: { fields: readonly string[] } | null;
+          inlineEdit: { fields: readonly string[] } | null;
           inlineConnect: boolean;
           refLabelField: string;
         }
@@ -416,56 +414,62 @@ export const controller = (
     )
   >
 ): RelationshipController => {
+  const cardsDisplayOptions =
+    config.fieldMeta.displayMode === 'cards'
+      ? {
+          cardFields: config.fieldMeta.cardFields,
+          inlineCreate: config.fieldMeta.inlineCreate,
+          inlineEdit: config.fieldMeta.inlineEdit,
+          linkToItem: config.fieldMeta.linkToItem,
+          removeMode: config.fieldMeta.removeMode,
+          inlineConnect: config.fieldMeta.inlineConnect,
+        }
+      : undefined;
+
   return {
     refFieldKey: config.fieldMeta.refFieldKey,
     many: config.fieldMeta.many,
     listKey: config.listKey,
     path: config.path,
     label: config.label,
-    display:
-      config.fieldMeta.displayMode === 'cards'
-        ? {
-            mode: 'cards',
-            cardFields: config.fieldMeta.cardFields,
-            inlineCreate: config.fieldMeta.inlineCreate,
-            inlineEdit: config.fieldMeta.inlineEdit,
-            linkToItem: config.fieldMeta.linkToItem,
-            removeMode: config.fieldMeta.removeMode,
-            inlineConnect: config.fieldMeta.inlineConnect,
-          }
-        : config.fieldMeta.displayMode === 'count'
-        ? { mode: 'count' }
-        : {
-            mode: 'select',
-            refLabelField: config.fieldMeta.refLabelField,
-          },
+    display: config.fieldMeta.displayMode === 'count' ? 'count' : 'cards-or-select',
     refListKey: config.fieldMeta.refListKey,
     graphqlSelection:
-      config.fieldMeta.displayMode === 'cards'
-        ? `${config.path} {
-            id
-            label: ${config.fieldMeta.refLabelField}
-          }`
-        : config.fieldMeta.displayMode === 'count'
+      config.fieldMeta.displayMode === 'count'
         ? `${config.path}Count`
         : `${config.path} {
               id
               label: ${config.fieldMeta.refLabelField}
             }`,
     hideCreate: config.fieldMeta.hideCreate,
-    defaultValue: config.fieldMeta.many
-      ? {
-          id: null,
-          kind: 'many',
-          initialValue: [],
-          value: [],
-        }
-      : { id: null, kind: 'one', value: null, initialValue: null },
+    // note we're not making the state kind: 'count' when ui.displayMode is set to 'count'.
+    // that ui.displayMode: 'count' is really just a way to have reasonable performance
+    // because our other UIs don't handle relationships with a large number of items well
+    // but that's not a problem here since we're creating a new item so we might as well them a better UI
+    defaultValue:
+      cardsDisplayOptions !== undefined
+        ? {
+            kind: 'cards-view',
+            currentIds: new Set(),
+            id: null,
+            initialIds: new Set(),
+            itemBeingCreated: false,
+            itemsBeingEdited: new Set(),
+            displayOptions: cardsDisplayOptions,
+          }
+        : config.fieldMeta.many
+        ? {
+            id: null,
+            kind: 'many',
+            initialValue: [],
+            value: [],
+          }
+        : { id: null, kind: 'one', value: null, initialValue: null },
     deserialize: data => {
       if (config.fieldMeta.displayMode === 'count') {
         return { id: data.id, kind: 'count', count: data[`${config.path}Count`] ?? 0 };
       }
-      if (config.fieldMeta.displayMode === 'cards') {
+      if (cardsDisplayOptions !== undefined) {
         const initialIds = new Set<string>(
           (Array.isArray(data[config.path])
             ? data[config.path]
@@ -481,6 +485,7 @@ export const controller = (
           itemBeingCreated: false,
           initialIds,
           currentIds: initialIds,
+          displayOptions: cardsDisplayOptions,
         };
       }
       if (config.fieldMeta.many) {

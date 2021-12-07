@@ -23,7 +23,7 @@ const reexportKeystoneConfig = async (cwd: string, isDisabled?: boolean) => {
   // of the configuration file in the .next/ directory. Even if we're not building
   // an Admin UI, we still need to run the `build()` function so that this config
   // file is correctly compiled.
-  const pkgDir = Path.dirname(require.resolve('@keystone-next/keystone/package.json'));
+  const pkgDir = Path.dirname(require.resolve('@keystone-6/core/package.json'));
   const p = serializePathForImport(
     Path.relative(Path.join(projectAdminPath, 'pages', 'api'), configPath)
   );
@@ -70,7 +70,7 @@ export async function build(cwd: string) {
     console.log('✨ Skipping Admin UI code generation');
   } else {
     console.log('✨ Generating Admin UI code');
-    await generateAdminUI(config, graphQLSchema, adminMeta, getAdminPath(cwd));
+    await generateAdminUI(config, graphQLSchema, adminMeta, getAdminPath(cwd), false);
   }
 
   console.log('✨ Generating Keystone config code');

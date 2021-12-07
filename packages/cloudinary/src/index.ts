@@ -1,11 +1,11 @@
 import path from 'path';
 import {
   CommonFieldConfig,
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   FieldTypeFunc,
   jsonFieldTypePolyfilledForSQLite,
-} from '@keystone-next/keystone/types';
-import { graphql } from '@keystone-next/keystone';
+} from '@keystone-6/core/types';
+import { graphql } from '@keystone-6/core';
 import { FileUpload } from 'graphql-upload';
 import cuid from 'cuid';
 import cloudinary from 'cloudinary';
@@ -20,14 +20,15 @@ type StoredFile = {
   _meta: cloudinary.UploadApiResponse;
 };
 
-type CloudinaryImageFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> & {
+type CloudinaryImageFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> & {
     cloudinary: {
       cloudName: string;
       apiKey: string;
       apiSecret: string;
       folder?: string;
     };
+    db?: { map?: string };
   };
 
 const CloudinaryImageFormat = graphql.inputObject({
@@ -106,10 +107,10 @@ const outputType = graphql.object<CloudinaryImage_File>()({
 });
 
 export const cloudinaryImage =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
+  <ListTypeInfo extends BaseListTypeInfo>({
     cloudinary,
     ...config
-  }: CloudinaryImageFieldConfig<TGeneratedListTypes>): FieldTypeFunc =>
+  }: CloudinaryImageFieldConfig<ListTypeInfo>): FieldTypeFunc<ListTypeInfo> =>
   meta => {
     if ((config as any).isIndexed === 'unique') {
       throw Error("isIndexed: 'unique' is not a supported option for field type cloudinaryImage");
@@ -143,30 +144,38 @@ export const cloudinaryImage =
 
       return { id, filename, originalFilename, mimetype, encoding, _meta };
     };
-    return jsonFieldTypePolyfilledForSQLite(meta.provider, {
-      ...config,
-      input: {
-        create: { arg: graphql.arg({ type: graphql.Upload }), resolve: resolveInput },
-        update: { arg: graphql.arg({ type: graphql.Upload }), resolve: resolveInput },
-      },
-      output: graphql.field({
-        type: outputType,
-        resolve({ value }) {
-          if (value === null) {
-            return null;
-          }
-          const val = value as any;
-          return {
-            publicUrl: adapter.publicUrl(val),
-            publicUrlTransformed: ({
-              transformation,
-            }: {
-              transformation: graphql.InferValueFromArg<graphql.Arg<typeof CloudinaryImageFormat>>;
-            }) => adapter.publicUrlTransformed(val, transformation ?? {}),
-            ...val,
-          };
+    return jsonFieldTypePolyfilledForSQLite(
+      meta.provider,
+      {
+        ...config,
+        input: {
+          create: { arg: graphql.arg({ type: graphql.Upload }), resolve: resolveInput },
+          update: { arg: graphql.arg({ type: graphql.Upload }), resolve: resolveInput },
         },
-      }),
-      views: path.join(path.dirname(__dirname), 'views'),
-    });
+        output: graphql.field({
+          type: outputType,
+          resolve({ value }) {
+            if (value === null) {
+              return null;
+            }
+            const val = value as any;
+            return {
+              publicUrl: adapter.publicUrl(val),
+              publicUrlTransformed: ({
+                transformation,
+              }: {
+                transformation: graphql.InferValueFromArg<
+                  graphql.Arg<typeof CloudinaryImageFormat>
+                >;
+              }) => adapter.publicUrlTransformed(val, transformation ?? {}),
+              ...val,
+            };
+          },
+        }),
+        views: path.join(path.dirname(__dirname), 'views'),
+      },
+      {
+        map: config.db?.map,
+      }
+    );
   };

@@ -2,7 +2,7 @@ import { humanize } from '../../../lib/utils';
 import {
   fieldType,
   FieldTypeFunc,
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   CommonFieldConfig,
   orderDirectionEnum,
   Decimal,
@@ -17,8 +17,8 @@ import {
   getResolvedIsNullable,
 } from '../../non-null-graphql';
 
-export type DecimalFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> & {
+export type DecimalFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> & {
     validation?: {
       min?: string;
       max?: string;
@@ -29,7 +29,7 @@ export type DecimalFieldConfig<TGeneratedListTypes extends BaseGeneratedListType
     defaultValue?: string;
     isIndexed?: boolean | 'unique';
     graphql?: { create?: { isNonNull?: boolean }; read?: { isNonNull?: boolean } };
-    db?: { isNullable?: boolean };
+    db?: { isNullable?: boolean; map?: string };
   };
 
 function parseDecimalValueOption(meta: FieldData, value: string, name: string) {
@@ -50,14 +50,14 @@ function parseDecimalValueOption(meta: FieldData, value: string, name: string) {
 }
 
 export const decimal =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
+  <ListTypeInfo extends BaseListTypeInfo>({
     isIndexed,
     precision = 18,
     scale = 4,
     validation,
     defaultValue,
     ...config
-  }: DecimalFieldConfig<TGeneratedListTypes> = {}): FieldTypeFunc =>
+  }: DecimalFieldConfig<ListTypeInfo> = {}): FieldTypeFunc<ListTypeInfo> =>
   meta => {
     if (meta.provider === 'sqlite') {
       throw new Error('The decimal field does not support sqlite');
@@ -121,6 +121,7 @@ export const decimal =
       index,
       default:
         defaultValue === undefined ? undefined : { kind: 'literal' as const, value: defaultValue },
+      map: config.db?.map,
     } as const;
     return fieldType(dbField)({
       ...config,
@@ -146,6 +147,8 @@ export const decimal =
         },
       },
       input: {
+        uniqueWhere:
+          isIndexed === 'unique' ? { arg: graphql.arg({ type: graphql.Decimal }) } : undefined,
         where: {
           arg: graphql.arg({ type: filters[meta.provider].Decimal[mode] }),
           resolve: mode === 'optional' ? filters.resolveCommon : undefined,

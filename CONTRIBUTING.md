@@ -6,7 +6,7 @@ Contributions which improve the documentation and test coverage are particularly
 
 ### Community Ecosystem
 
-Keystone makes no assumptions about type of applications it powers. It achieves flexibility through small, highly composable parts that allow you to build a foundation for any type of application.
+Keystone makes no assumptions about type of applications it powers. It achieves flexibility through small, highly composable parts that allow you to build a foundation for a broad variety of applications.
 
 For this reason we might not add features to Keystone if they are prescriptive about:
 
@@ -57,12 +57,12 @@ While not every changeset is going to need a huge amount of detail, a good idea 
 - WHY the change was made
 - HOW a consumer should update their code
 
-An example, if you generate a changeset that includes `adapter-prisma` as a patch, and `keystone` as a minor, you can merge your PR, and the next time the `version-packages` command is run, these will both be updated.
+An example, if you generate a changeset that includes `auth` as a patch, and `core` as a minor, you can merge your PR, and the next time the `version-packages` command is run, these will both be updated.
 
 ```md
 ---
-'@keystone-next/adapter-prisma-legacy': patch
-'@keystone-next/keystone': minor
+'@keystone-6/auth': patch
+'@keystone-6/core': minor
 ---
 
 A very useful description of the changes should be here.
@@ -78,6 +78,43 @@ In particular, please try to write in the past tense (e.g. "Added a new feature"
 
 Thanks for your help with this.
 
+### How we version packages
+
+Keystone follows the semver model of {major}.{minor}.{patch}. Version numbers are the first and most obvious way we have of communicating changes to our users, so it's important we convey consistent meaning with them, and strike a careful balance between releasing often vs. overloading consumers with package updates.
+
+Generally, versions should be interpreted like:
+
+- `major` means a breaking change to the public API of a package, and/or a meaningful change to the internal behaviour
+- `minor` means we added a feature to the package, which is backwards compatible with the current major version
+- `patch` means a bug has been fixed in the package
+
+If a PR includes any of the above, it needs a changeset so the updated packages get released and versioned correctly.
+
+Other reasons for versioning packages include:
+
+- If a dependency is updated, and that dependency's API is exposed, the package exposing the API should be bumped by the same level as the dependency being updated. For example a new major version of mongoose would warrant a new major version of keystone.
+- If a dependency is updated, and that dependency is not exposed, it may be important to release a package with the update, for example with security fixes. In that case, the package would be bumped with a `patch` version.
+
+#### Versioning UI changes
+
+Front-end packages (the Admin UI, Design System, etc) should always follow the rules above for API changes, but may also warrant a version bump for UI changes without an API change. This is more open to interpretation, but should follow the spirit of the rules above:
+
+- `major` should be used if we're meaningfully changing how the UI looks or works (think: should we update screenshots on the website? might users need to relearn something they know how to do?)
+- `minor` should be used if a new feature is available
+- `patch` should be used if something has been tweaked or fixed
+
+#### Versioning example projects
+
+Since the example projects don't get published anywhere and don't expose API, it's less obvious when they should be versioned. In this case, think of "someone referring to the example project" as an API consumer, and use the version number to communicate anything they should know.
+
+- `major` means the example has been meaningfully changed, and the difference would break expectations about how it works
+- `minor` means the example has had features added or is significantly improved
+- `patch` means something has been fixed
+
+Minor refactoring, including incorporating changes to Keystone APIs, would not warrant updating the package version.
+
+Generally, these guidelines are in place so that we don't spam consumers with version upgrades that don't provide value. They are subjective however, and not "one size fits all" so if you're not sure whether a change warrants a version bump, ask for advice in the PR.
+
 ### Release Guidelines
 
 #### How to do a release
@@ -89,17 +126,17 @@ Releasing is a two-step process. The first step updates the packages, and the se
 ##### Update Packages (automatic)
 
 This step is handled for us by the Changesets GitHub Action. As PRs are opened
-against `master`, the bot will open and update a PR which generates the
+against `main`, the bot will open and update a PR which generates the
 appropriate `CHANGELOG.md` entries and `package.json` version bumps.
 
-Once ready for a release, merge the bot's PR into `master`.
+Once ready for a release, merge the bot's PR into `main`.
 
 > _NOTE: For information on manually updating packages, see [Update Packages
 > (manual)](#update-packages-manual)_
 
 ##### Publish Packages
 
-Once the version changes are merged back in to master, to do a manual release:
+Once the version changes are merged back in to main, to do a manual release:
 
 ```sh
 yarn fresh && \
@@ -123,7 +160,7 @@ The `yarn version-packages` command will generate a release commit, which will b
 The commands to run are:
 
 ```sh
-git checkout master && \
+git checkout main && \
 git pull && \
 git branch -D temp-release-branch && \
 git checkout -b temp-release-branch && \
@@ -136,12 +173,12 @@ git commit -m "Version packages" && \
 git push --set-upstream origin temp-release-branch
 ```
 
-Once you have run this you will need to make a pull request to merge this back into master.
+Once you have run this you will need to make a pull request to merge this back into main.
 
 Finally, make sure you've got the latest of everything locally
 
 ```sh
-git checkout master && \
+git checkout main && \
 git pull && \
 yarn
 ```
@@ -221,7 +258,7 @@ Now, for each release we want to backport to, we follow this process:
 
 4. Do _NOT_ open a PR
 
-   This change is not going to be PR'd into master. Instead we'll later push
+   This change is not going to be PR'd into main. Instead we'll later push
    the tag which contains the commits.
 
    To confirm everything is as expected, look at the git log:
@@ -247,10 +284,10 @@ Now, for each release we want to backport to, we follow this process:
    )
    ```
 
-     <!-- this was the cd command but we don't have a command to replace the exact bolt part yet    cd `bolt ws $PACKAGE_NAME exec -- pwd | grep pwd | sed -e 's/.*pwd[ ]*//'` && \ w
-   -->
-
    _NOTE: When prompted for "New version", just hit Enter_
+
+   <!-- this was the cd command but we don't have a command to replace the exact bolt part yet: cd `bolt ws $PACKAGE_NAME exec -- pwd | grep pwd | sed -e 's/.*pwd[ ]*//'` && \ w
+   -->
 
 6. Confirm it was published
 

@@ -1,5 +1,107 @@
 # @keystone-next/fields-document
 
+## 1.0.1
+
+### Patch Changes
+
+- [#7030](https://github.com/keystonejs/keystone/pull/7030) [`26213c6f3`](https://github.com/keystonejs/keystone/commit/26213c6f3c49dd47392c0e31389339aae3f10806) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fixed the input in the link dialog not being focusable
+
+## 1.0.0
+
+### Major Changes
+
+- [#7028](https://github.com/keystonejs/keystone/pull/7028) [`3c7a581c1`](https://github.com/keystonejs/keystone/commit/3c7a581c1e53ae49c9f74509de3927ebf2703bde) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Released Keystone 6
+
+* [#7005](https://github.com/keystonejs/keystone/pull/7005) [`f4554980f`](https://github.com/keystonejs/keystone/commit/f4554980f6243a6545eee6c887d946ff25cd90e3) Thanks [@gwyneplaine](https://github.com/gwyneplaine)! - - The following types have been renamed:
+  - `BaseGeneratedListTypes` → `BaseListTypeInfo`
+  - `ItemRootValue` → `BaseItem`
+  - `ListInfo` → `ListGraphQLTypes`
+  - `TypesForList` → `GraphQLTypesForList`
+  - `FieldTypeFunc` now has a required type parameter which must satisfy `BaseListTypeInfo`
+  - The following types now have a required type parameter which must satisfy `BaseKeystoneTypeInfo`:
+    - `ServerConfig`
+    - `CreateRequestContext`
+    - `AdminUIConfig`
+    - `DatabaseConfig`
+    - `ListOperationAccessControl`
+    - `MaybeSessionFunction`
+    - `MaybeItemFunction`
+  - `GraphQLResolver` and `GraphQLSchemaExtension` now have a required type parameter which must satisfy `KeystoneContext`
+  - `KeystoneGraphQLAPI` no longer has a type parameter
+  - The first parameter to the resolver in a `virtual` field will be typed as the item type if the list is typed with `Keystone.Lists` or `Keystone.Lists.ListKey`, otherwise it will be typed as `unknown`
+  - The `item`/`originalItem` arguments in hooks/access control will now receive the `Item` type if the list is typed with `Keystone.Lists` or `Keystone.Lists.ListKey`, otherwise it will be typed as `BaseItem`
+  - `args` has been removed from `BaseListTypeInfo`
+  - `inputs.orderBy` and `all` has been added to `BaseListTypeInfo`
+  - In `.keystone/types`:
+    - `ListKeyListTypeInfo` has been moved to `Lists.ListKey.TypeInfo`
+    - `KeystoneContext` has been renamed to `Context`
+
+### Patch Changes
+
+- Updated dependencies [[`7dddbe0fd`](https://github.com/keystonejs/keystone/commit/7dddbe0fd5b42a2596ba4dc0bbe1813cb54571c7), [`fb7844ab5`](https://github.com/keystonejs/keystone/commit/fb7844ab50c1d4a6d14b2ad46a568665f6661921), [`3c7a581c1`](https://github.com/keystonejs/keystone/commit/3c7a581c1e53ae49c9f74509de3927ebf2703bde), [`f4554980f`](https://github.com/keystonejs/keystone/commit/f4554980f6243a6545eee6c887d946ff25cd90e3)]:
+  - @keystone-6/core@1.0.0
+  - @keystone-6/document-renderer@1.0.0
+
+## 14.0.0
+
+### Major Changes
+
+- [#6957](https://github.com/keystonejs/keystone/pull/6957) [`de8cf44e7`](https://github.com/keystonejs/keystone/commit/de8cf44e7b328ab98e1466d7191d9ee65a57b02a) Thanks [@bladey](https://github.com/bladey)! - Update Node engines to support current Node LTS versions, currently versions 14 and 16.
+
+### Patch Changes
+
+- [#6944](https://github.com/keystonejs/keystone/pull/6944) [`2be0e18a1`](https://github.com/keystonejs/keystone/commit/2be0e18a142c85072df1f07af11dae49e4eb8324) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fixed clear button in inline relationships
+
+- Updated dependencies [[`f2b41df9f`](https://github.com/keystonejs/keystone/commit/f2b41df9f77cf340e5e138cf60bacd6aec8e4548), [`04c54a4eb`](https://github.com/keystonejs/keystone/commit/04c54a4eb4aa6076cf87d441060eaa2091bc903b), [`748538649`](https://github.com/keystonejs/keystone/commit/748538649645d3b0ef32b0baba8fa310f2a493fe), [`4e96c23bb`](https://github.com/keystonejs/keystone/commit/4e96c23bb6c3a134f1324ec7879adac3abf90132), [`76ec35c97`](https://github.com/keystonejs/keystone/commit/76ec35c97a72dcb023e1b0da5b47e876896b6a03), [`760ae82ac`](https://github.com/keystonejs/keystone/commit/760ae82ac0fac5f73e123e2b36f7ba6320312ca6), [`0a7b75838`](https://github.com/keystonejs/keystone/commit/0a7b7583887e3811c23b0b74f4f97633fd484e08), [`622e57689`](https://github.com/keystonejs/keystone/commit/622e57689cf27dbecba7f64c02f0a3b6499d3218), [`bbedee845`](https://github.com/keystonejs/keystone/commit/bbedee84541d22c91a6816872902f6cce8e6aee3), [`82539faa5`](https://github.com/keystonejs/keystone/commit/82539faa53c495be1f5f470deb9eae9861cd31a0), [`18e3168aa`](https://github.com/keystonejs/keystone/commit/18e3168aae5739f5596c7811cd30c8d1f47ad77a), [`760ae82ac`](https://github.com/keystonejs/keystone/commit/760ae82ac0fac5f73e123e2b36f7ba6320312ca6), [`96fd2e220`](https://github.com/keystonejs/keystone/commit/96fd2e22041de84a042f5a0df2cab75ba0dacc35), [`04c54a4eb`](https://github.com/keystonejs/keystone/commit/04c54a4eb4aa6076cf87d441060eaa2091bc903b), [`82539faa5`](https://github.com/keystonejs/keystone/commit/82539faa53c495be1f5f470deb9eae9861cd31a0), [`de8cf44e7`](https://github.com/keystonejs/keystone/commit/de8cf44e7b328ab98e1466d7191d9ee65a57b02a), [`748538649`](https://github.com/keystonejs/keystone/commit/748538649645d3b0ef32b0baba8fa310f2a493fe), [`7a7450009`](https://github.com/keystonejs/keystone/commit/7a7450009d68f70173a2af55eb3a845ea3799c99)]:
+  - @keystone-next/keystone@29.0.0
+  - @keystone-next/document-renderer@5.0.0
+  - @keystone-ui/fields@6.0.0
+  - @keystone-ui/button@6.0.0
+  - @keystone-ui/core@4.0.0
+  - @keystone-ui/icons@5.0.0
+  - @keystone-ui/popover@5.0.0
+  - @keystone-ui/tooltip@5.0.0
+
+## 13.0.0
+
+### Minor Changes
+
+- [#6907](https://github.com/keystonejs/keystone/pull/6907) [`990b56291`](https://github.com/keystonejs/keystone/commit/990b56291e677077656b201b935086754c6257f1) Thanks [@JedWatson](https://github.com/JedWatson)! - Added `db.map` option to lists and fields which adds the `@@map` and `@map` Prisma attributes respectively
+
+### Patch Changes
+
+- Updated dependencies [[`70eb86237`](https://github.com/keystonejs/keystone/commit/70eb86237bd3eafd36b0579f66ad3f1e173357b1), [`990b56291`](https://github.com/keystonejs/keystone/commit/990b56291e677077656b201b935086754c6257f1), [`70eb86237`](https://github.com/keystonejs/keystone/commit/70eb86237bd3eafd36b0579f66ad3f1e173357b1), [`b981f4c3e`](https://github.com/keystonejs/keystone/commit/b981f4c3ee135a1184188deb5ed8de22f718080c)]:
+  - @keystone-next/keystone@28.0.0
+  - @keystone-ui/fields@5.0.2
+
+## 12.0.0
+
+### Minor Changes
+
+- [#6705](https://github.com/keystonejs/keystone/pull/6705) [`fb5b21c03`](https://github.com/keystonejs/keystone/commit/fb5b21c033fcad26745b91e2c73a2e43cc921828) Thanks [@oplik0](https://github.com/oplik0)! - Add short plain-text display to document fields for Cell (list view; resolves #6522) and a rendered document view in CardValue
+
+### Patch Changes
+
+- Updated dependencies [[`f3e8aac31`](https://github.com/keystonejs/keystone/commit/f3e8aac31efb3eb1573eb340e07a25920084a4aa), [`ddabdbd02`](https://github.com/keystonejs/keystone/commit/ddabdbd02230374ff921998f9d21c0ad7d32b226), [`71600965b`](https://github.com/keystonejs/keystone/commit/71600965b963e098ca77ae1261b850b9573c9f22), [`d9e1ba8fa`](https://github.com/keystonejs/keystone/commit/d9e1ba8fa23c0d9e902ef61167913ee92f5657cb), [`71600965b`](https://github.com/keystonejs/keystone/commit/71600965b963e098ca77ae1261b850b9573c9f22), [`5e61e0050`](https://github.com/keystonejs/keystone/commit/5e61e00503715f0f634d97e573926091a52661e6), [`f38772b27`](https://github.com/keystonejs/keystone/commit/f38772b27d3e9d157127dabfa40036462c235a9f), [`30fc08b51`](https://github.com/keystonejs/keystone/commit/30fc08b515e4f8851fd2583a265a813c683bf604), [`f683dcfe3`](https://github.com/keystonejs/keystone/commit/f683dcfe37d013b3d17f1fbad3df335b2f2ee51c), [`c0661b8ee`](https://github.com/keystonejs/keystone/commit/c0661b8ee9e16a1ffdd7fc77c9c56fead0efda36), [`db7f2311b`](https://github.com/keystonejs/keystone/commit/db7f2311bb2ff8e1e70350cd0f087439b8404a8a), [`023bc7a0b`](https://github.com/keystonejs/keystone/commit/023bc7a0b1e6fb0ebdc5055f0243d9dad255a667), [`cbb9df927`](https://github.com/keystonejs/keystone/commit/cbb9df927a0f106aaa35d107961a405b0d08a751), [`d1141ea82`](https://github.com/keystonejs/keystone/commit/d1141ea8235bca4ce88500991c24b962b06ade45), [`cbb9df927`](https://github.com/keystonejs/keystone/commit/cbb9df927a0f106aaa35d107961a405b0d08a751), [`ddabdbd02`](https://github.com/keystonejs/keystone/commit/ddabdbd02230374ff921998f9d21c0ad7d32b226), [`71600965b`](https://github.com/keystonejs/keystone/commit/71600965b963e098ca77ae1261b850b9573c9f22), [`d107a5bec`](https://github.com/keystonejs/keystone/commit/d107a5becdd16245caf208c3979965fa926e484c), [`44cbef543`](https://github.com/keystonejs/keystone/commit/44cbef5435081311acb9e68dd750f1ca289b8221), [`dcf5241d8`](https://github.com/keystonejs/keystone/commit/dcf5241d8e3e62b080842a5d4bfd47a7f2cce5ca)]:
+  - @keystone-next/keystone@27.0.0
+
+## 11.0.0
+
+### Patch Changes
+
+- [#6744](https://github.com/keystonejs/keystone/pull/6744) [`0ef1ee3cc`](https://github.com/keystonejs/keystone/commit/0ef1ee3ccd99f0f3e1f955f03d00b1a0f238c7cd) Thanks [@bladey](https://github.com/bladey)! - Renamed branch `master` to `main`.
+
+* [#6754](https://github.com/keystonejs/keystone/pull/6754) [`bed3a560a`](https://github.com/keystonejs/keystone/commit/bed3a560a59d4fe787f3beebd65f8148453aae35) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Updated dist filenames
+
+* Updated dependencies [[`73544fd19`](https://github.com/keystonejs/keystone/commit/73544fd19b865be9fbf3ea9ae68fae5f039eb13f), [`0ef1ee3cc`](https://github.com/keystonejs/keystone/commit/0ef1ee3ccd99f0f3e1f955f03d00b1a0f238c7cd), [`930b7129f`](https://github.com/keystonejs/keystone/commit/930b7129f37beb396bb8ecc8a8dc9f1b3615a7e0), [`fac96cbd1`](https://github.com/keystonejs/keystone/commit/fac96cbd14febcc01bdffbecd1aceee391f6a20a), [`3d289eb3d`](https://github.com/keystonejs/keystone/commit/3d289eb3d00c3e6a0c26ce962fb0f942a08c400a), [`bed3a560a`](https://github.com/keystonejs/keystone/commit/bed3a560a59d4fe787f3beebd65f8148453aae35), [`930b7129f`](https://github.com/keystonejs/keystone/commit/930b7129f37beb396bb8ecc8a8dc9f1b3615a7e0), [`6e4a0cf56`](https://github.com/keystonejs/keystone/commit/6e4a0cf56ce35b2446db7970763c55446de3db0e), [`d64bd4a7f`](https://github.com/keystonejs/keystone/commit/d64bd4a7f3da87e13e9cac41f0eb9757b771835f), [`abeceaf90`](https://github.com/keystonejs/keystone/commit/abeceaf902c231aabe9cf3a383ecf29c09b8f4dd), [`704f68b38`](https://github.com/keystonejs/keystone/commit/704f68b38f970860137380e21c36e04d2c51a7a4), [`576f341e6`](https://github.com/keystonejs/keystone/commit/576f341e61b31bbcf076ba70002d137c7b7ff9a9)]:
+  - @keystone-next/keystone@26.1.0
+  - @keystone-ui/button@5.0.2
+  - @keystone-ui/core@3.2.1
+  - @keystone-ui/fields@5.0.1
+  - @keystone-ui/icons@4.0.2
+  - @keystone-ui/popover@4.0.5
+  - @keystone-ui/tooltip@4.0.3
+
 ## 10.0.0
 
 ### Major Changes

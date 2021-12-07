@@ -35,7 +35,7 @@ Here's what we're going to do:
 - Create a Next.js app
 - Embed Keystone, and run an Admin UI you can read and write to locally
 - Add a simple Keystone [Schema](/apis/schema) with a `Post` List
-- Setup a secure read-only GraphQL API endpoint (and Apollo Sandbox) that you can access in production
+- Setup a secure read-only GraphQL API endpoint (and GraphQL Playground) that you can access in production
 - Deploy the app to Vercel 🚀
 
 ## Setup a Next.js app
@@ -75,7 +75,7 @@ Now that we have the Next.js starter with static files, let‘s embed Keystone i
 Add the following Keystone dependency to your project:
 
 ```bash
-yarn add @keystone-next/keystone
+yarn add @keystone-6/core
 ```
 
 ### Update .gitignore
@@ -97,12 +97,12 @@ To create and edit blog records in Keystone’s Admin UI, add a `keystone.ts` [c
 ```tsx
 // keystone.ts
 
-import { config, list } from '@keystone-next/keystone';
-import { text } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { text } from '@keystone-6/core/fields';
 
 const Post = list({
   fields: {
-    title: text({ isRequired: true }),
+    title: text({ validation: { isRequired: true } }),
     slug: text({ isIndexed: 'unique', isFilterable: true }),
     content: text(),
   },
@@ -133,7 +133,7 @@ Edit the `next.config.js` file in your project root with the following:
 -   reactStrictMode: true,
 - }
 
-+ const { withKeystone } = require("@keystone-next/keystone/next");
++ const { withKeystone } = require("@keystone-6/core/next");
 
 + module.exports = withKeystone({
 +  reactStrictMode: true,
@@ -148,7 +148,7 @@ Finally, make a small change to the `scripts` object in `package.json` to includ
 
 ```diff
 "scripts": {
-+ "postinstall": "keystone-next postinstall",
++ "postinstall": "keystone postinstall",
   "dev": "next dev",
   "build": "next build",
   "start": "next start",
@@ -182,7 +182,7 @@ import { InferGetStaticPropsType } from 'next';
 import Link from 'next/link';
 
 // Import the generated Lists API from Keystone
-import { lists } from '.keystone/api';
+import { query } from '.keystone/api';
 
 // Home receives a `posts` prop from `getStaticProps` below
 export default function Home({
@@ -210,7 +210,7 @@ export default function Home({
 // Here we use the Lists API to load all the posts we want to display
 // The return of this function is provided to the `Home` component
 export async function getStaticProps() {
-  const posts = await lists.Post.findMany({ query: 'id title slug' });
+  const posts = await query.Post.findMany({ query: 'id title slug' });
   return { props: { posts } };
 }
 ```
@@ -226,7 +226,7 @@ import {
   InferGetStaticPropsType,
 } from 'next';
 import Link from 'next/link';
-import { lists } from '.keystone/api';
+import { query } from '.keystone/api';
 
 export default function PostPage({
   post,
@@ -247,7 +247,7 @@ export default function PostPage({
 }
 
 export async function getStaticPaths(): Promise<GetStaticPathsResult> {
-  const posts = await lists.Post.findMany({
+  const posts = await query.Post.findMany({
     query: `slug`,
   });
 
@@ -265,7 +265,7 @@ export async function getStaticPaths(): Promise<GetStaticPathsResult> {
 export async function getStaticProps({
   params,
 }: GetStaticPropsContext) {
-  const post = await lists.Post.findOne({
+  const post = await query.Post.findOne({
     where: { slug: params!.slug as string },
     query: 'id title content',
   });
@@ -284,7 +284,7 @@ Run `yarn dev` again.
 
 ## Bonus: add the GraphQL API to the frontend
 
-To get a read-only GraphQL API and Apollo Sandbox in production, add `/pages/api/graphql.tsx`with the following:
+To get a read-only GraphQL API and GraphQL Playground in production, add `/pages/api/graphql.tsx`with the following:
 
 ```tsx
 // pages/api/graphql.tsx
@@ -292,7 +292,7 @@ To get a read-only GraphQL API and Apollo Sandbox in production, add `/pages/api
 export { default, config } from '.keystone/next/graphql-api';
 ```
 
-This takes the fully functional GraphQL API that Keystone is already generating and makes it available as an endpoint and Apollo Sandbox within the Next.js frontend app at [http://localhost:3000/api/graphql](http://localhost:3000/api/graphql).
+This takes the fully functional GraphQL API that Keystone is already generating and makes it available as an endpoint and GraphQL Playground within the Next.js frontend app at [http://localhost:3000/api/graphql](http://localhost:3000/api/graphql).
 
 ![A browser displaying the GraphQL playground](/assets/walkthroughs/embedded-nextjs/graphql-api.png)
 
@@ -334,7 +334,7 @@ Keystone’s Embedded mode and SQLite support gives you the option to run a self
     heading="Getting Started with create-keystone-app"
     href="/docs/walkthroughs/getting-started-with-create-keystone-app"
     >
-    How to use Keystone's CLI app to standup a new local project with an Admin UI & the Apollo Sandbox.
+    How to use Keystone's CLI app to standup a new local project with an Admin UI & the GraphQL Playground.
   </Well>
 </RelatedContent>
 

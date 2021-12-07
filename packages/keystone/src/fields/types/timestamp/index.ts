@@ -1,6 +1,6 @@
 import { humanize } from '../../../lib/utils';
 import {
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   fieldType,
   FieldTypeFunc,
   CommonFieldConfig,
@@ -16,8 +16,8 @@ import {
 import { resolveView } from '../../resolve-view';
 import { TimestampFieldMeta } from './views';
 
-export type TimestampFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> & {
+export type TimestampFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> & {
     isIndexed?: boolean | 'unique';
     validation?: {
       isRequired?: boolean;
@@ -30,16 +30,17 @@ export type TimestampFieldConfig<TGeneratedListTypes extends BaseGeneratedListTy
     db?: {
       updatedAt?: boolean;
       isNullable?: boolean;
+      map?: string;
     };
   };
 
 export const timestamp =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
+  <ListTypeInfo extends BaseListTypeInfo>({
     isIndexed,
     validation,
     defaultValue,
     ...config
-  }: TimestampFieldConfig<TGeneratedListTypes> = {}): FieldTypeFunc =>
+  }: TimestampFieldConfig<ListTypeInfo> = {}): FieldTypeFunc<ListTypeInfo> =>
   meta => {
     if (typeof defaultValue === 'string') {
       try {
@@ -82,6 +83,7 @@ export const timestamp =
           ? undefined
           : { kind: 'now' },
       updatedAt: config.db?.updatedAt,
+      map: config.db?.map,
     })({
       ...config,
       hooks: {
@@ -96,6 +98,8 @@ export const timestamp =
         },
       },
       input: {
+        uniqueWhere:
+          isIndexed === 'unique' ? { arg: graphql.arg({ type: graphql.DateTime }) } : undefined,
         where: {
           arg: graphql.arg({ type: filters[meta.provider].DateTime[mode] }),
           resolve: mode === 'optional' ? filters.resolveCommon : undefined,

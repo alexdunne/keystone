@@ -1,5 +1,5 @@
 import {
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   FieldTypeFunc,
   CommonFieldConfig,
   fieldType,
@@ -26,15 +26,15 @@ type CardsDisplayConfig = {
     // Sets the relationship to display as a list of Cards
     displayMode: 'cards';
     /* The set of fields to render in the default Card component **/
-    cardFields: string[];
+    cardFields: readonly string[];
     /** Causes the default Card component to render as a link to navigate to the related item */
     linkToItem?: boolean;
     /** Determines whether removing a related item in the UI will delete or unlink it */
     removeMode?: 'disconnect' | 'none'; // | 'delete';
     /** Configures inline create mode for cards (alternative to opening the create modal) */
-    inlineCreate?: { fields: string[] };
+    inlineCreate?: { fields: readonly string[] };
     /** Configures inline edit mode for cards */
-    inlineEdit?: { fields: string[] };
+    inlineEdit?: { fields: readonly string[] };
     /** Configures whether a select to add existing items should be shown or not */
     inlineConnect?: boolean;
   };
@@ -48,22 +48,41 @@ type CountDisplayConfig = {
   };
 };
 
-export type RelationshipFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> & {
+type OneDbConfig = {
+  many?: false;
+  db?: {
+    foreignKey?:
+      | true
+      | {
+          map: string;
+        };
+  };
+};
+
+type ManyDbConfig = {
+  many: true;
+  db?: {
+    relationName?: string;
+  };
+};
+
+export type RelationshipFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> & {
     many?: boolean;
     ref: string;
     ui?: {
       hideCreate?: boolean;
     };
-  } & (SelectDisplayConfig | CardsDisplayConfig | CountDisplayConfig);
+  } & (OneDbConfig | ManyDbConfig) &
+    (SelectDisplayConfig | CardsDisplayConfig | CountDisplayConfig);
 
 export const relationship =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
-    many = false,
+  <ListTypeInfo extends BaseListTypeInfo>({
     ref,
     ...config
-  }: RelationshipFieldConfig<TGeneratedListTypes>): FieldTypeFunc =>
+  }: RelationshipFieldConfig<ListTypeInfo>): FieldTypeFunc<ListTypeInfo> =>
   meta => {
+    const { many = false } = config;
     const [foreignListKey, foreignFieldKey] = ref.split('.');
     const commonConfig = {
       ...config,
@@ -134,12 +153,13 @@ export const relationship =
       );
     }
     const listTypes = meta.lists[foreignListKey].types;
-    if (many) {
+    if (config.many) {
       return fieldType({
         kind: 'relation',
         mode: 'many',
         list: foreignListKey,
         field: foreignFieldKey,
+        relationName: config.db?.relationName,
       })({
         ...commonConfig,
         input: {
@@ -189,6 +209,7 @@ export const relationship =
       mode: 'one',
       list: foreignListKey,
       field: foreignFieldKey,
+      foreignKey: config.db?.foreignKey,
     })({
       ...commonConfig,
       input: {

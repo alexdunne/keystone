@@ -1,10 +1,10 @@
 import globby from 'globby';
-import { list } from '@keystone-next/keystone';
-import { text } from '@keystone-next/keystone/fields';
-import { KeystoneContext } from '@keystone-next/keystone/types';
-import { setupTestRunner } from '@keystone-next/keystone/testing';
-import { humanize } from '@keystone-next/keystone/src/lib/utils';
-import { apiTestConfig, expectResolverError, expectValidationError } from '../utils';
+import { list } from '@keystone-6/core';
+import { text } from '@keystone-6/core/fields';
+import { KeystoneContext } from '@keystone-6/core/types';
+import { setupTestRunner } from '@keystone-6/core/testing';
+import { humanize } from '@keystone-6/core/src/lib/utils';
+import { apiTestConfig, expectSingleResolverError, expectValidationError } from '../utils';
 
 const testModules = globby.sync(`packages/**/src/**/test-fixtures.{js,ts}`, {
   absolute: true,
@@ -201,20 +201,12 @@ testModules
                       expect(data).toEqual({ [updateMutationName]: null });
                       if (mod.neverNull) {
                         const message = `Input error: ${mod.name} fields cannot be set to null`;
-                        expectResolverError('dev', false, false, errors, [
-                          {
-                            path: [updateMutationName],
-                            messages: [`Test.${fieldName}: ${message}`],
-                            debug: [
-                              {
-                                message,
-                                stacktrace: expect.stringMatching(
-                                  new RegExp(`Error: ${message}\n`)
-                                ),
-                              },
-                            ],
-                          },
-                        ]);
+                        expectSingleResolverError(
+                          errors,
+                          updateMutationName,
+                          `Test.${fieldName}`,
+                          message
+                        );
                       } else {
                         expectValidationError(errors, [
                           {

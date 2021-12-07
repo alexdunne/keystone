@@ -1,7 +1,7 @@
 import inflection from 'inflection';
 import { humanize } from '../../../lib/utils';
 import {
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   fieldType,
   FieldTypeFunc,
   CommonFieldConfig,
@@ -16,15 +16,15 @@ import {
 } from '../../non-null-graphql';
 import { resolveView } from '../../resolve-view';
 
-export type SelectFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> &
+export type SelectFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> &
     (
       | {
           /**
            * When a value is provided as just a string, it will be formatted in the same way
            * as field labels are to create the label.
            */
-          options: ({ label: string; value: string } | string)[];
+          options: readonly ({ label: string; value: string } | string)[];
           /**
            * If `enum` is provided on SQLite, it will use an enum in GraphQL but a string in the database.
            */
@@ -32,7 +32,7 @@ export type SelectFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes
           defaultValue?: string;
         }
       | {
-          options: { label: string; value: number }[];
+          options: readonly { label: string; value: number }[];
           type: 'integer';
           defaultValue?: number;
         }
@@ -58,6 +58,7 @@ export type SelectFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes
       };
       db?: {
         isNullable?: boolean;
+        map?: string;
       };
     };
 
@@ -66,13 +67,13 @@ const MAX_INT = 2147483647;
 const MIN_INT = -2147483648;
 
 export const select =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
+  <ListTypeInfo extends BaseListTypeInfo>({
     isIndexed,
     ui: { displayMode = 'select', ...ui } = {},
     defaultValue,
     validation,
     ...config
-  }: SelectFieldConfig<TGeneratedListTypes>): FieldTypeFunc =>
+  }: SelectFieldConfig<ListTypeInfo>): FieldTypeFunc<ListTypeInfo> =>
   meta => {
     const fieldLabel = config.label ?? humanize(meta.fieldKey);
     const resolvedIsNullable = getResolvedIsNullable(validation, config.db);
@@ -80,8 +81,8 @@ export const select =
 
     assertCreateIsNonNullAllowed(meta, config);
     const commonConfig = (
-      options: { value: string | number; label: string }[]
-    ): CommonFieldConfig<TGeneratedListTypes> & {
+      options: readonly { value: string | number; label: string }[]
+    ): CommonFieldConfig<ListTypeInfo> & {
       views: string;
       getAdminMeta: () => import('./views').AdminSelectFieldMeta;
     } => {
@@ -128,6 +129,7 @@ export const select =
         defaultValue === undefined
           ? undefined
           : { kind: 'literal' as const, value: defaultValue as any },
+      map: config.db?.map,
     } as const;
 
     const resolveCreate = <T extends string | number>(val: T | null | undefined): T | null => {
@@ -165,6 +167,8 @@ export const select =
       })({
         ...commonConfig(config.options),
         input: {
+          uniqueWhere:
+            isIndexed === 'unique' ? { arg: graphql.arg({ type: graphql.Int }) } : undefined,
           where: {
             arg: graphql.arg({ type: filters[meta.provider].Int[mode] }),
             resolve: mode === 'required' ? undefined : filters.resolveCommon,
@@ -204,6 +208,8 @@ export const select =
       )({
         ...commonConfig(options),
         input: {
+          uniqueWhere:
+            isIndexed === 'unique' ? { arg: graphql.arg({ type: graphQLType }) } : undefined,
           where: {
             arg: graphql.arg({ type: filters[meta.provider].enum(graphQLType).optional }),
             resolve: mode === 'required' ? undefined : filters.resolveCommon,
@@ -218,6 +224,8 @@ export const select =
     return fieldType({ kind: 'scalar', scalar: 'String', ...commonDbFieldConfig })({
       ...commonConfig(options),
       input: {
+        uniqueWhere:
+          isIndexed === 'unique' ? { arg: graphql.arg({ type: graphql.String }) } : undefined,
         where: {
           arg: graphql.arg({ type: filters[meta.provider].String[mode] }),
           resolve: mode === 'required' ? undefined : filters.resolveString,

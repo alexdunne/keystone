@@ -1,7 +1,7 @@
 // Float in GQL: A signed double-precision floating-point value.
 import { humanize } from '../../../lib/utils';
 import {
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   FieldTypeFunc,
   CommonFieldConfig,
   fieldType,
@@ -16,8 +16,8 @@ import {
 } from '../../non-null-graphql';
 import { resolveView } from '../../resolve-view';
 
-export type FloatFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> & {
+export type FloatFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> & {
     defaultValue?: number;
     isIndexed?: boolean | 'unique';
     validation?: {
@@ -35,16 +35,17 @@ export type FloatFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes>
     };
     db?: {
       isNullable?: boolean;
+      map?: string;
     };
   };
 
 export const float =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
+  <ListTypeInfo extends BaseListTypeInfo>({
     isIndexed,
     validation,
     defaultValue,
     ...config
-  }: FloatFieldConfig<TGeneratedListTypes> = {}): FieldTypeFunc =>
+  }: FloatFieldConfig<ListTypeInfo> = {}): FieldTypeFunc<ListTypeInfo> =>
   meta => {
     if (
       defaultValue !== undefined &&
@@ -100,6 +101,7 @@ export const float =
       index: isIndexed === true ? 'index' : isIndexed || undefined,
       default:
         typeof defaultValue === 'number' ? { kind: 'literal', value: defaultValue } : undefined,
+      map: config.db?.map,
     })({
       ...config,
       hooks: {
@@ -129,6 +131,8 @@ export const float =
         },
       },
       input: {
+        uniqueWhere:
+          isIndexed === 'unique' ? { arg: graphql.arg({ type: graphql.Float }) } : undefined,
         where: {
           arg: graphql.arg({ type: filters[meta.provider].Float[mode] }),
           resolve: filters.resolveCommon,

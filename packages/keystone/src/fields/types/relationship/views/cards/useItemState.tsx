@@ -22,7 +22,7 @@ export function useItemState({
   selectedFields: string;
   localList: ListMeta;
   field: ReturnType<typeof controller>;
-  id: string;
+  id: string | null;
 }) {
   const { data, error, loading } = useQuery(
     gql`query($id: ID!) {
@@ -33,7 +33,7 @@ export function useItemState({
     }
   }
 }`,
-    { variables: { id }, errorPolicy: 'all' }
+    { variables: { id }, errorPolicy: 'all', skip: id === null }
   );
   const { itemsArrFromData, relationshipGetter } = useMemo(() => {
     const dataGetter = makeDataGetter(data, error?.graphQLErrors);
@@ -132,7 +132,7 @@ export function useItemState({
   };
 }
 
-export function useFieldsObj(list: ListMeta, fields: string[] | undefined) {
+export function useFieldsObj(list: ListMeta, fields: readonly string[] | undefined) {
   return useMemo(() => {
     const editFields: Record<string, FieldMeta> = {};
     fields?.forEach(fieldPath => {

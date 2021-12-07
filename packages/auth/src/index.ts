@@ -1,13 +1,14 @@
 import url from 'url';
 import {
   AdminFileToWrite,
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   KeystoneConfig,
   KeystoneContext,
   AdminUIConfig,
   SessionStrategy,
-} from '@keystone-next/keystone/types';
-import { password, timestamp } from '@keystone-next/keystone/fields';
+  BaseKeystoneTypeInfo,
+} from '@keystone-6/core/types';
+import { password, timestamp } from '@keystone-6/core/fields';
 
 import { AuthConfig, AuthGqlNames } from './types';
 import { getSchemaExtension } from './schema';
@@ -19,15 +20,15 @@ import { initTemplate } from './templates/init';
  *
  * Generates config for Keystone to implement standard auth features.
  */
-export function createAuth<GeneratedListTypes extends BaseGeneratedListTypes>({
+export function createAuth<ListTypeInfo extends BaseListTypeInfo>({
   listKey,
   secretField,
   initFirstItem,
   identityField,
   magicAuthLink,
   passwordResetLink,
-  sessionData,
-}: AuthConfig<GeneratedListTypes>) {
+  sessionData = 'id',
+}: AuthConfig<ListTypeInfo>) {
   const gqlNames: AuthGqlNames = {
     // Core
     authenticateItemWithPassword: `authenticate${listKey}WithPassword`,
@@ -88,7 +89,10 @@ export function createAuth<GeneratedListTypes extends BaseGeneratedListTypes>({
    *  - to the init page when initFirstItem is configured, and there are no user in the database
    *  - to the signin page when no valid session is present
    */
-  const pageMiddleware: AdminUIConfig['pageMiddleware'] = async ({ context, isValidSession }) => {
+  const pageMiddleware: AdminUIConfig<BaseKeystoneTypeInfo>['pageMiddleware'] = async ({
+    context,
+    isValidSession,
+  }) => {
     const { req, session } = context;
     const pathname = url.parse(req!.url!).pathname!;
 
@@ -163,6 +167,7 @@ export function createAuth<GeneratedListTypes extends BaseGeneratedListTypes>({
     initFirstItem,
     passwordResetLink,
     magicAuthLink,
+    sessionData,
   });
 
   /**
@@ -232,20 +237,17 @@ export function createAuth<GeneratedListTypes extends BaseGeneratedListTypes>({
           return;
         }
 
-        // NOTE: This is wrapped in a try-catch block because a "not found" result will currently
-        // throw; I think this needs to be reviewed, but for now this prevents a system crash when
-        // the session item is invalid
         try {
-          // If no field selection is specified, just load the id. We still load the item,
-          // because doing so validates that it exists in the database
           const data = await sudoContext.query[listKey].findOne({
             where: { id: session.itemId },
-            query: sessionData || 'id',
+            query: sessionData,
           });
+          if (!data) return;
+
           return { ...session, itemId: session.itemId, listKey, data };
         } catch (e) {
-          // TODO: This swallows all errors, we need a way to differentiate between "not found" and
-          // actual exceptions that should be thrown
+          // TODO: the assumption is this should only be from an invalid sessionData configuration
+          //   it could be something else though, either way, result is a bad session
           return;
         }
       },
@@ -292,10 +294,10 @@ export function createAuth<GeneratedListTypes extends BaseGeneratedListTypes>({
         },
       };
     }
-    let session = keystoneConfig.session;
-    if (session && sessionData) {
-      session = withItemData(session);
-    }
+
+    if (!keystoneConfig.session) throw new TypeError('Missing .session configuration');
+    const session = withItemData(keystoneConfig.session);
+
     const existingExtendGraphQLSchema = keystoneConfig.extendGraphqlSchema;
     const listConfig = keystoneConfig.lists[listKey];
     return {

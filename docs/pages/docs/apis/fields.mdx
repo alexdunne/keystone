@@ -5,6 +5,8 @@ import { InlineCode } from '../../../components/primitives/Code';
 
 # Fields API
 
+?> We recently improved this API. If you were using it prior to October 5th 2021, [read this guide](/releases/2021-10-05#upgrade-guide) for details on how to upgrade.
+
 The `fields` option of a [list configuration](./schema) defines the names, types, and configuration of the fields in the list.
 This configuration option takes an object with field names as keys, and configured field types as values.
 
@@ -12,7 +14,7 @@ This document covers the different field types which are available and the confi
 To see how to access fields in the GraphQL API please see the [GraphQL API](./graphql) docs.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
+import { config, list } from '@keystone-6/core';
 import {
   // Scalar types
   checkbox,
@@ -33,11 +35,11 @@ import {
   // File types
   file,
   image,
-} from '@keystone-next/keystone/fields';
+} from '@keystone-6/core/fields';
 
 // Complex types
-import { document } from '@keystone-next/fields-document';
-import { cloudinaryImage } from '@keystone-next/cloudinary';
+import { document } from '@keystone-6/fields-document';
+import { cloudinaryImage } from '@keystone-6/cloudinary';
 
 export default config({
   lists: {
@@ -76,16 +78,16 @@ Options:
 - `label`: The label displayed for this field in the Admin UI. Defaults to a human readable version of the field name.
 - `ui`: Controls how the field is displayed in the Admin UI.
   - `views`: A [resolved](https://nodejs.org/api/modules.html#modules_require_resolve_request_options) path to a module containing code to replace or extend the default Admin UI components for this field. See the [Custom Field Views](../guides/custom-field-views) guide for details on how to use this option.
-  - `createView` (default: `'edit'`): Controls the create view page of the Admin UI.
-    Can be one of `['edit', 'hidden']`, or an async function with an argument `{ session }` that returns one of `['edit', 'hidden']`.
+  - `createView.fieldMode` (default: `'edit'`): Controls the create view page of the Admin UI.
+    Can be one of `['edit', 'hidden']`, or an async function with an argument `{ session, context }` that returns one of `['edit', 'hidden']`.
     Defaults to the list's `ui.createView.defaultFieldMode` config if defined.
     See the [Schema API](./schema#ui) for details.
-  - `itemView` (default: `'edit'`): Controls the item view page of the Admin UI.
-    Can be one of `['edit', 'read', 'hidden']`, or an async function with an argument `{ session, item }` that returns one of `['edit', 'read', 'hidden']`.
+  - `itemView.fieldMode` (default: `'edit'`): Controls the item view page of the Admin UI.
+    Can be one of `['edit', 'read', 'hidden']`, or an async function with an argument `{ session, context, item }` that returns one of `['edit', 'read', 'hidden']`.
     Defaults to the list's `ui.itemView.defaultFieldMode` config if defined.
     See the [Schema API](./schema#ui) for details.
-  - `listView` (default: `'read'`): Controls the list view page of the Admin UI.
-    Can be one of `['read', 'hidden']`, or an async function with an argument `{ session }` that returns one of `['read', 'hidden']`.
+  - `listView.fieldMode` (default: `'read'`): Controls the list view page of the Admin UI.
+    Can be one of `['read', 'hidden']`, or an async function with an argument `{ session, context }` that returns one of `['read', 'hidden']`.
     Defaults to the list's `ui.listView.defaultFieldMode` config if defined.
     See the [Schema API](./schema#ui) for details.
 - `graphql`: Configures certain aspects of the GraphQL API.
@@ -109,13 +111,13 @@ export default config({
           ui: {
             views: require.resolve('path/to/viewsModule.tsx'),
             createView: {
-              fieldMode: ({ session }) => 'edit',
+              fieldMode: ({ session, context }) => 'edit',
             },
             itemView: {
-              fieldMode: ({ session, item }) => 'read',
+              fieldMode: ({ session, context, item }) => 'read',
             },
             listView: {
-              fieldMode: ({ session }) => 'read',
+              fieldMode: ({ session, context }) => 'read',
             },
           },
           graphql: {
@@ -141,6 +143,7 @@ A `checkbox` field represents a boolean (`true`/`false`) value.
 Options:
 
 - `defaultValue` (default: `false`): This value will be used for the field when creating items if no explicit value is set.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `graphql.read.isNonNull` (default: `false`): If you have no read access control and you don't intend to add any in the future,
   you can set this to true and the output field will be non-nullable. This is only allowed when you have no read access control because otherwise,
   when access is denied, `null` will be returned which will cause an error since the field is non-nullable and the error
@@ -151,8 +154,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { checkbox } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { checkbox } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -160,6 +163,7 @@ export default config({
       fields: {
         fieldName: checkbox({
           defaultValue: true,
+          db: { map: 'my_checkbox' },
           graphql: {
             read: {
               isNonNull: true
@@ -187,6 +191,7 @@ Options:
 - `defaultValue` (default: `undefined`): Can be either an integer value or `{ kind: 'autoincrement' }`.
   This value will be used for the field when creating items if no explicit value is set.
 - `db.isNullable` (default: `validation.isRequired ? false : true`): If `false` then this field will be made non-nullable in the database and it will never be possible to set as `null`.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null`.
   It validate this when creating and updating an item through the GraphQL API or the Admin UI.
   It will also default `db.isNullable` to false.
@@ -206,8 +211,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { integer } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { integer } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -215,6 +220,7 @@ export default config({
       fields: {
         fieldName: integer({
           defaultValue: 0,
+          db: { map: 'my_integer' },
           validation: {
             isRequired: true,
           },
@@ -236,10 +242,11 @@ Currently the `json` field is non-orderable and non-filterable.
 
 - `defaultValue` (default: `null`): Can be set to any JSON value.
   This value will be used for the field when creating items if no explicit value is set.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { json } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { json } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -247,6 +254,7 @@ export default config({
       fields: {
         fieldName: json({
           defaultValue: { something: true },
+          db: { map: 'my_json' },
         }),
         /* ... */
       },
@@ -265,6 +273,7 @@ Options:
 
 - `defaultValue` (default: `undefined`): Can be a finite float value.
   This value will be used for the field when creating items if no explicit value is set.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `db.isNullable` (default: `validation.isRequired ? false : true`): If `false` then this field will be made non-nullable in the database and it will never be possible to set as `null`.
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null`.
   It validate this when creating and updating an item through the GraphQL API or the Admin UI.
@@ -284,8 +293,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { float } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { float } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -293,6 +302,7 @@ export default config({
       fields: {
         fieldName: float({
           defaultValue: 3.14159,
+          db: { map: 'my_float' },
           validation: {
             isRequired: true,
           },
@@ -317,6 +327,7 @@ Options:
   This value will be used for the field when creating items if no explicit value is set.
 - `precision` (default: `18`): Maximum number of digits that are present in the number.
 - `scale` (default: `4`): Maximum number of decimal places.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `db.isNullable` (default: `validation.isRequired ? false : true`): If `false` then this field will be made non-nullable in the database and it will never be possible to set as `null`.
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null`.
   It validate this when creating and updating an item through the GraphQL API or the Admin UI.
@@ -337,8 +348,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { decimal } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { decimal } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -348,6 +359,7 @@ export default config({
           defaultValue: '3.142',
           precision: 12,
           scale: 3,
+          db: { map: 'my_decimal' },
           validation: {
             isRequired: true,
             max: '10000',
@@ -370,6 +382,7 @@ A `password` field represents an encrypted password value.
 
 Options:
 
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `db.isNullable` (default: `validation.isRequired ? false : true`): If `false` then this field will be made non-nullable in the database and it will never be possible to set as `null`.
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null`.
   It validate this when creating and updating an item through the GraphQL API or the Admin UI.
@@ -384,14 +397,15 @@ Options:
   This module will be used for all encryption routines in the `password` field.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { password } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { password } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
     ListName: list({
       fields: {
         fieldName: password({
+          db: { map: 'password_field' },
           validation: {
             length: { min: 10, max: 1000 },
             isRequired: true,
@@ -424,6 +438,7 @@ Options:
   `value` is either a `string` (for `{ type: 'string' }` or `{ type: 'enum' }`), or a `number` (for `{ type: 'integer' }`).
   The `value` will be used in the GraphQL API and stored in the database.
 - `defaultValue` (default: `undefined`): This value will be used for the field when creating items if no explicit value is set.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `db.isNullable` (default: `validation.isRequired ? false : true`): If `false` then this field will be made non-nullable in the database and it will never be possible to set as `null`.
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null`.
   It validate this when creating and updating an item through the GraphQL API or the Admin UI.
@@ -443,8 +458,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { select } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { select } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -457,6 +472,7 @@ export default config({
             /* ... */
           ],
           defaultValue: '...',
+          db: { map: 'my_select' },
           validation: { isRequired: true, },
           isIndexed: 'unique',
           ui: { displayMode: 'select' },
@@ -476,8 +492,9 @@ A `text` field represents a string value.
 
 Options:
 
-- `db.isNullable` (default: `false`): If `true` then this field will be made nullable in the database and it will be possible to set as `null`.
 - `defaultValue` (default: `db.isNullable === true ? undefined : ''`): This value will be used for the field when creating items if no explicit value is set.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
+- `db.isNullable` (default: `false`): If `true` then this field will be made nullable in the database and it will be possible to set as `null`.
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null` or an empty string.
   Unlike `db.isNullable`, this will require that a value with at least 1 character is provided in the Admin UI.
   It will also validate this when creating and updating an item through the GraphQL API but it will not enforce it at the database level.
@@ -501,8 +518,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { text } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { text } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -510,6 +527,7 @@ export default config({
       fields: {
         fieldName: text({
           defaultValue: '...',
+          db: { map: 'my_text' },
           validation: { isRequired: true },
           isIndexed: 'unique',
           ui: { displayMode: 'textarea' },
@@ -531,11 +549,12 @@ Options:
 
 - `defaultValue` (default: `undefined`): Can be either a string value with a date time string in ISO8601 format or `{ kind: 'now' }`.
   This value will be used for the field when creating items if no explicit value is set.
+- `db.map`: Adds a [Prisma `@map`](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#map) attribute to this field which changes the column name in the database
 - `db.isNullable` (default: `validation.isRequired ? false : true`): If `false` then this field will be made non-nullable in the database and it will never be possible to set as `null`.
 - `validation.isRequired` (default: `false`): If `true` then this field can never be set to `null`.
   It validate this when creating and updating an item through the GraphQL API or the Admin UI.
   It will also default `db.isNullable` to false.
-- `db.createdAt` (default: `false`) If `true` then this field will add the `@updatedAt` attribute to this field in the Prisma schema.
+- `db.updatedAt` (default: `false`) If `true` then this field will add the `@updatedAt` attribute to this field in the Prisma schema.
   This will update this field to the current time whenever an item is created/updated with the GraphQL API or any other usage of the Prisma Client if this field is not explicitly set in the request.
   Note this happens at the Prisma Client level, not at the database so if you update an item in your database directly, fields with `db.updatedAt: true` will not automatically update.
 - `isIndexed` (default: `false`)
@@ -551,8 +570,8 @@ Options:
   if a user doesn't have access to create the particular field regardless of whether or not they specify the field in the create.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { timestamp } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { timestamp } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -560,6 +579,7 @@ export default config({
       fields: {
         fieldName: timestamp({
           defaultValue: '1970-01-01T00:00:00.000Z',
+          db: { map: 'my_timestamp' },
           validation: { isRequired: true },
           isIndexed: 'unique',
         }),
@@ -582,6 +602,8 @@ Read our [relationships guide](../guides/relationships) for details on Keystoneâ
 
 - `ref` (required): A string of the form `<listKey>` or `<listKey>.<fieldKey>`.
 - `many` (default: `false`): Configures the cardinality of the relationship.
+- `db.foreignKey`: When `true` or an object, ensures the foreign Key for two-sided relationships is stored in the table for this list (only available on single relationships, and not on both sides of a 1:1 relationship)
+  - `map`: Changes the column name in the database
 - `ui` (default: `{ hideCreate: false, displayMode: 'select' }`): Configures the display mode of the field in the Admin UI.
   - `hideCreate` (default: `false`). If `true`, the "Create related item" button is not shown in the item view.
   - `displayMode` (default: `'select'`): Controls the mode used to display the field in the item view. The mode `'select'` displays related items in a select component, while `'cards'` displays the related items in a card layout. Each display mode supports further configuration.
@@ -597,8 +619,8 @@ Read our [relationships guide](../guides/relationships) for details on Keystoneâ
 - `ui.displayMode === 'count'` only supports `many` relationships
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { relationship } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { relationship } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -607,6 +629,11 @@ export default config({
         fieldName: relationship({
           ref: '...',
           many: false,
+          db: {
+            foreignKey: {
+              map: 'foreign_id',
+            },
+          },
           ui: {
             hideCreate: false,
             // Display mode: 'select'
@@ -657,8 +684,8 @@ Options:
   or an enum or you need to provide arguments to the field.
 
 ```typescript
-import { config, graphql, list } from '@keystone-next/keystone';
-import { virtual } from '@keystone-next/keystone/fields';
+import { config, graphql, list } from '@keystone-6/core';
+import { virtual } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -693,8 +720,8 @@ A `file` field represents a file of any type.
 See [`config.files`](./config#files) for details on how to configure your Keystone system with support for the `file` field type.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { file } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { file } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -717,8 +744,8 @@ An `image` field represents an image file, i.e. `.jpg`, `.png`, `.webp`, or `.gi
 See [`config.images`](./config#images) for details on how to configure your Keystone system with support for the `image` field type.
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { image } from '@keystone-next/keystone/fields';
+import { config, list } from '@keystone-6/core';
+import { image } from '@keystone-6/core/fields';
 
 export default config({
   lists: {
@@ -750,8 +777,8 @@ Options:
 - `layouts`
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { document } from '@keystone-next/fields-document';
+import { config, list } from '@keystone-6/core';
+import { document } from '@keystone-6/fields-document';
 
 export default config({
   lists: {
@@ -788,8 +815,8 @@ export default config({
   - `folder`
 
 ```typescript
-import { config, list } from '@keystone-next/keystone';
-import { cloudinaryImage } from '@keystone-next/cloudinary';
+import { config, list } from '@keystone-6/core';
+import { cloudinaryImage } from '@keystone-6/cloudinary';
 
 export default config({
   lists: {

@@ -1,5 +1,4 @@
-import { mergeSchemas } from '@graphql-tools/schema';
-import { ExtendGraphqlSchema } from '@keystone-next/keystone/types';
+import { ExtendGraphqlSchema, getGqlNames } from '@keystone-6/core/types';
 
 import {
   assertObjectType,
@@ -7,7 +6,10 @@ import {
   assertInputObjectType,
   GraphQLString,
   GraphQLID,
+  parse,
+  validate,
 } from 'graphql';
+import { graphql } from '@keystone-6/core';
 import { AuthGqlNames, AuthTokenTypeConfig, InitFirstItemConfig, SecretFieldImpl } from './types';
 import { getBaseAuthSchema } from './gql/getBaseAuthSchema';
 import { getInitFirstItemSchema } from './gql/getInitFirstItemSchema';
@@ -38,27 +40,28 @@ export function getSecretFieldImpl(schema: GraphQLSchema, listKey: string, field
   return secretFieldImpl;
 }
 
-export const getSchemaExtension =
-  ({
-    identityField,
-    listKey,
-    secretField,
-    gqlNames,
-    initFirstItem,
-    passwordResetLink,
-    magicAuthLink,
-  }: {
-    identityField: string;
-    listKey: string;
-    secretField: string;
-    gqlNames: AuthGqlNames;
-    initFirstItem?: InitFirstItemConfig<any>;
-    passwordResetLink?: AuthTokenTypeConfig;
-    magicAuthLink?: AuthTokenTypeConfig;
-  }): ExtendGraphqlSchema =>
-  schema => {
+export const getSchemaExtension = ({
+  identityField,
+  listKey,
+  secretField,
+  gqlNames,
+  initFirstItem,
+  passwordResetLink,
+  magicAuthLink,
+  sessionData,
+}: {
+  identityField: string;
+  listKey: string;
+  secretField: string;
+  gqlNames: AuthGqlNames;
+  initFirstItem?: InitFirstItemConfig<any>;
+  passwordResetLink?: AuthTokenTypeConfig;
+  magicAuthLink?: AuthTokenTypeConfig;
+  sessionData: string;
+}): ExtendGraphqlSchema =>
+  graphql.extend(base => {
     const uniqueWhereInputType = assertInputObjectType(
-      schema.getType(`${listKey}WhereUniqueInput`)
+      base.schema.getType(`${listKey}WhereUniqueInput`)
     );
     const identityFieldOnUniqueWhere = uniqueWhereInputType.getFields()[identityField];
     if (
@@ -72,21 +75,53 @@ export const getSchemaExtension =
           `to the field at ${listKey}.${identityField}`
       );
     }
-    return [
-      getBaseAuthSchema({
-        identityField,
+    const baseSchema = getBaseAuthSchema({
+      identityField,
+      listKey,
+      secretField,
+      gqlNames,
+      secretFieldImpl: getSecretFieldImpl(base.schema, listKey, secretField),
+      base,
+    });
+
+    // technically this will incorrectly error if someone has a schema extension that adds a field to the list output type
+    // and then wants to fetch that field with `sessionData` but it's extremely unlikely someone will do that since if
+    // they want to add a GraphQL field, they'll probably use a virtual field
+    let ast;
+    let query = `query($id: ID!) { ${
+      getGqlNames({
         listKey,
-        secretField,
-        gqlNames,
-        secretFieldImpl: getSecretFieldImpl(schema, listKey, secretField),
-      }),
+        // this isn't used to get the itemQueryName and we don't know it here
+        pluralGraphQLName: '',
+      }).itemQueryName
+    }(where: { id: $id }) { ${sessionData} } }`;
+    try {
+      ast = parse(query);
+    } catch (err) {
+      throw new Error(
+        `The query to get session data has a syntax error, the sessionData option in your createAuth usage is likely incorrect\n${err}`
+      );
+    }
+
+    const errors = validate(base.schema, ast);
+    if (errors.length) {
+      throw new Error(
+        `The query to get session data has validation errors, the sessionData option in your createAuth usage is likely incorrect\n${errors.join(
+          '\n'
+        )}`
+      );
+    }
+
+    return [
+      baseSchema.extension,
       initFirstItem &&
         getInitFirstItemSchema({
           listKey,
           fields: initFirstItem.fields,
           itemData: initFirstItem.itemData,
           gqlNames,
-          graphQLSchema: schema,
+          graphQLSchema: base.schema,
+          ItemAuthenticationWithPasswordSuccess: baseSchema.ItemAuthenticationWithPasswordSuccess,
         }),
       passwordResetLink &&
         getPasswordResetSchema({
@@ -96,7 +131,7 @@ export const getSchemaExtension =
           passwordResetLink,
           gqlNames,
           passwordResetTokenSecretFieldImpl: getSecretFieldImpl(
-            schema,
+            base.schema,
             listKey,
             'passwordResetToken'
           ),
@@ -107,9 +142,8 @@ export const getSchemaExtension =
           listKey,
           magicAuthLink,
           gqlNames,
-          magicAuthTokenSecretFieldImpl: getSecretFieldImpl(schema, listKey, 'magicAuthToken'),
+          magicAuthTokenSecretFieldImpl: getSecretFieldImpl(base.schema, listKey, 'magicAuthToken'),
+          base,
         }),
-    ]
-      .filter(x => x)
-      .reduce((s, extension) => mergeSchemas({ schemas: [s], ...extension }), schema);
-  };
+    ].filter((x): x is Exclude<typeof x, undefined> => x !== undefined);
+  });

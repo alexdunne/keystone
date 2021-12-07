@@ -3,7 +3,7 @@ import { CorsOptions } from 'cors';
 import express from 'express';
 import type { GraphQLSchema } from 'graphql';
 
-import type { AssetMode, CreateRequestContext, KeystoneContext } from '..';
+import type { AssetMode, CreateRequestContext, BaseKeystoneTypeInfo, KeystoneContext } from '..';
 
 import { SessionStrategy } from '../session';
 import type { MaybePromise } from '../utils';
@@ -18,11 +18,11 @@ import type { BaseFields } from './fields';
 import type { ListAccessControl, FieldAccessControl } from './access-control';
 import type { ListHooks } from './hooks';
 
-export type KeystoneConfig = {
+export type KeystoneConfig<TypeInfo extends BaseKeystoneTypeInfo = BaseKeystoneTypeInfo> = {
   lists: ListSchemaConfig;
-  db: DatabaseConfig;
-  ui?: AdminUIConfig;
-  server?: ServerConfig;
+  db: DatabaseConfig<TypeInfo>;
+  ui?: AdminUIConfig<TypeInfo>;
+  server?: ServerConfig<TypeInfo>;
   session?: SessionStrategy<any>;
   graphql?: GraphQLConfig;
   extendGraphqlSchema?: ExtendGraphqlSchema;
@@ -36,8 +36,8 @@ export type KeystoneConfig = {
     generateNodeAPI?: boolean;
     /** Creates a file at `node_modules/.keystone/next/graphql-api` with `default` and `config` exports that can be re-exported in a Next API route */
     generateNextGraphqlAPI?: boolean;
-    /** Config options for Keystone Cloud */
-    keystoneCloud?: KeystoneCloudConfig;
+    /** Options for Keystone Cloud */
+    cloud?: CloudConfig;
     /** Adds the internal data structure `experimental.initialisedLists` to the context object.
      * This is not a stable API and may contain breaking changes in `patch` level releases.
      */
@@ -51,33 +51,35 @@ export type { ListSchemaConfig, ListConfig, BaseFields, MaybeSessionFunction, Ma
 
 // config.db
 
-export type DatabaseConfig = {
+export type DatabaseConfig<TypeInfo extends BaseKeystoneTypeInfo> = {
   url: string;
-  onConnect?: (args: KeystoneContext) => Promise<void>;
+  onConnect?: (args: KeystoneContext<TypeInfo>) => Promise<void>;
   useMigrations?: boolean;
   enableLogging?: boolean;
   idField?: IdFieldConfig;
   provider: 'postgresql' | 'sqlite';
-  prismaPreviewFeatures?: string[]; // https://www.prisma.io/docs/concepts/components/preview-features
+  prismaPreviewFeatures?: readonly string[]; // https://www.prisma.io/docs/concepts/components/preview-features
 };
 
 // config.ui
 
-export type AdminUIConfig = {
+export type AdminUIConfig<TypeInfo extends BaseKeystoneTypeInfo> = {
   /** Completely disables the Admin UI */
   isDisabled?: boolean;
   /** Enables certain functionality in the Admin UI that expects the session to be an item */
   enableSessionItem?: boolean;
   /** A function that can be run to validate that the current session should have access to the Admin UI */
-  isAccessAllowed?: (context: KeystoneContext) => MaybePromise<boolean>;
+  isAccessAllowed?: (context: KeystoneContext<TypeInfo>) => MaybePromise<boolean>;
   /** An array of page routes that can be accessed without passing the isAccessAllowed check */
-  publicPages?: string[];
+  publicPages?: readonly string[];
   /** The basePath for the Admin UI App */
   // FIXME: currently unused
   // path?: string;
-  getAdditionalFiles?: ((config: KeystoneConfig) => MaybePromise<AdminFileToWrite[]>)[];
+  getAdditionalFiles?: readonly ((
+    config: KeystoneConfig<TypeInfo>
+  ) => MaybePromise<readonly AdminFileToWrite[]>)[];
   pageMiddleware?: (args: {
-    context: KeystoneContext;
+    context: KeystoneContext<TypeInfo>;
     isValidSession: boolean;
   }) => MaybePromise<{ kind: 'redirect'; to: string } | void>;
 };
@@ -93,7 +95,7 @@ type HealthCheckConfig = {
   data?: Record<string, any> | (() => Record<string, any>);
 };
 
-export type ServerConfig = {
+export type ServerConfig<TypeInfo extends BaseKeystoneTypeInfo> = {
   /** Configuration options for the cors middleware. Set to `true` to use core Keystone defaults */
   cors?: CorsOptions | true;
   /** Port number to start the server on. Defaults to process.env.PORT || 3000 */
@@ -103,7 +105,7 @@ export type ServerConfig = {
   /** Health check configuration. Set to `true` to add a basic `/_healthcheck` route, or specify the path and data explicitly */
   healthCheck?: HealthCheckConfig | true;
   /** Hook to extend the Express App that Keystone creates */
-  extendExpressApp?: (app: express.Express, createContext: CreateRequestContext) => void;
+  extendExpressApp?: (app: express.Express, createContext: CreateRequestContext<TypeInfo>) => void;
 };
 
 // config.graphql
@@ -118,11 +120,18 @@ export type GraphQLConfig = {
     maxTotalResults?: number;
   };
   /**
+   * - `true` - Add `ApolloServerPluginLandingPageGraphQLPlayground` to the Apollo Server plugins
+   * - `false` - Add `ApolloServerPluginLandingPageDisabled` to the Apollo Server plugins
+   * - `'apollo'` - Do not add any plugins to the Apollo config, this will use [Apollo Sandbox](https://www.apollographql.com/docs/apollo-server/testing/build-run-queries/#apollo-sandbox)
+   * @default process.env.NODE_ENV !== 'production'
+   */
+  playground?: boolean | 'apollo';
+  /**
    *  Additional options to pass into the ApolloServer constructor.
    *  @see https://www.apollographql.com/docs/apollo-server/api/apollo-server/#constructor
    */
   apolloConfig?: Config;
-  /*
+  /**
    * When an error is returned from the GraphQL API, Apollo can include a stacktrace
    * indicating where the error occurred. When Keystone is processing mutations, it
    * will sometimes captures more than one error at a time, and then group these into
@@ -138,7 +147,7 @@ export type GraphQLConfig = {
    * `apolloConfig.formatError` to log the stacktraces and then strip them out before
    * returning the error.
    *
-   * ```
+   * ```ts
    * graphql: {
    *   debug: true,
    *   apolloConfig: {
@@ -152,8 +161,8 @@ export type GraphQLConfig = {
    *   },
    * }
    * ```
-   *   *
-   * Default: process.env.NODE_ENV !== 'production'
+   *
+   * @default process.env.NODE_ENV !== 'production'
    */
   debug?: boolean;
 };
@@ -199,13 +208,10 @@ export type ImagesConfig = {
   };
 };
 
-// config.experimental.keystoneCloud
+// config.experimental.cloud
 
-export type KeystoneCloudConfig = {
-  apiKey: string;
-  imagesDomain: string;
-  graphqlApiEndpoint: string;
-  restApiEndpoint: string;
+export type CloudConfig = {
+  apiKey?: string;
 };
 
 // Exports from sibling packages

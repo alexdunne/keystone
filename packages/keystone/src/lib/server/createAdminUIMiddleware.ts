@@ -5,7 +5,7 @@ import type { KeystoneConfig, CreateContext } from '../../types';
 import { createSessionContext } from '../../session';
 
 const adminErrorHTMLFilepath = path.join(
-  path.dirname(require.resolve('@keystone-next/keystone/package.json')),
+  path.dirname(require.resolve('@keystone-6/core/package.json')),
   'static',
   'admin-error.html'
 );
@@ -27,7 +27,11 @@ export const createAdminUIMiddleware = async (
   const publicPages = ui?.publicPages ?? [];
   return async (req: express.Request, res: express.Response) => {
     const { pathname } = url.parse(req.url);
-    if (pathname?.startsWith('/_next') || pathname === (graphql?.path || '/api/graphql')) {
+    if (
+      pathname?.startsWith('/_next') ||
+      pathname === (graphql?.path || '/api/graphql') ||
+      pathname === '/api/__keystone_api_build'
+    ) {
       handle(req, res);
       return;
     }

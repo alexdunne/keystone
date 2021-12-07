@@ -7,6 +7,13 @@ export const accessDeniedError = (msg: string) =>
   new ApolloError(`Access denied: ${msg}`, 'KS_ACCESS_DENIED');
 
 export const prismaError = (err: Error) => {
+  if ((err as any).code === undefined) {
+    return new ApolloError(`Prisma error`, 'KS_PRISMA_ERROR', {
+      debug: {
+        message: err.message,
+      },
+    });
+  }
   return new ApolloError(
     `Prisma error: ${err.message.split('\n').slice(-1)[0].trim()}`,
     'KS_PRISMA_ERROR',
@@ -43,7 +50,10 @@ export const resolverError = (things: { error: Error; tag: string }[]) => {
 };
 
 export const relationshipError = (things: { error: Error; tag: string }[]) => {
-  const s = things.map(t => `  - ${t.tag}: ${t.error.message}`).join('\n');
+  const s = things
+    .map(t => `  - ${t.tag}: ${t.error.message}`)
+    .sort()
+    .join('\n');
   return new ApolloError(
     `An error occured while resolving relationship fields.\n${s}`,
     'KS_RELATIONSHIP_ERROR',

@@ -5,7 +5,7 @@ It builds on the [Blog](../blog) starter project.
 
 ## Instructions
 
-To run this project, clone the Keystone repository locally then navigate to this directory and run:
+To run this project, clone the Keystone repository locally, run `yarn` at the root of the repository then navigate to this directory and run:
 
 ```shell
 yarn dev
@@ -14,7 +14,7 @@ yarn dev
 This will start the Admin UI at [localhost:3000](http://localhost:3000).
 You can use the Admin UI to create items in your database.
 
-You can also access a Apollo Sandbox at [localhost:3000/api/graphql](http://localhost:3000/api/graphql), which allows you to directly run GraphQL queries and mutations.
+You can also access a GraphQL Playground at [localhost:3000/api/graphql](http://localhost:3000/api/graphql), which allows you to directly run GraphQL queries and mutations.
 
 In a separate terminal, start the frontend dev server:
 
@@ -75,13 +75,13 @@ bio: document({
 
 ## Frontend Rendering
 
-In the `src` directory there is a Next.js frontend which uses the `DocumentRenderer` component from `@keystone-next/document-renderer` to render the document data.
+In the `src` directory there is a Next.js frontend which uses the `DocumentRenderer` component from `@keystone-6/document-renderer` to render the document data.
 
 We render the `Author.bio` field using the default document renderer.
 This renders the content with minimal styling.
 
 ```tsx
-import { DocumentRenderer } from '@keystone-next/document-renderer';
+import { DocumentRenderer } from '@keystone-6/document-renderer';
 
 <DocumentRenderer document={author.bio.document} />;
 ```
@@ -90,7 +90,7 @@ For the `Post.content` field we provide a custom renderer for headings, which al
 In this case we apply `textTransform: 'uppercase'` to all of our headings, while using the default styling for all other elements.
 
 ```tsx
-import { DocumentRenderer, DocumentRendererProps } from '@keystone-next/document-renderer';
+import { DocumentRenderer, DocumentRendererProps } from '@keystone-6/document-renderer';
 
 const renderers: DocumentRendererProps['renderers'] = {
   block: {

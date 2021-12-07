@@ -9,9 +9,10 @@ Keystone Next now has a new core <Emoji symbol="🤖" alt="Robot" />, unblocking
 
 After months of work deep in the codebase, it’ll be much easier for us to ship roadmap features like **custom field types**, **GraphQL Schema extensions**, and more.
 
-<Emoji symbol="⚠️" alt="Warning" /> This release does come with some minor behavioural changes to Keystone’s APIs, read on below.
+<Emoji symbol="⚠️" alt="Warning" /> This release does come with some minor behavioural changes to Keystone’s
+APIs, read on below.
 
-```sh
+```json
 "@keystone-next/admin-ui-utils": "5.0.2",
 "@keystone-next/auth": "27.0.0",
 "@keystone-next/cloudinary": "6.0.0",
@@ -30,7 +31,7 @@ After months of work deep in the codebase, it’ll be much easier for us to ship
 
 The core of Keystone has been re-implemented to make building fields and new features in Keystone easier. While the observable changes for most users should be minimal, there could be breakage <Emoji symbol="🤖" alt="Robot" />.
 
-⚠️ If you implemented a custom field type, you will need to change it to the new API, see fields in the `@keystone-next/fields` [package](https://github.com/keystonejs/keystone/tree/master/packages/fields) for inspiration on how to do this.
+<Emoji symbol="⚠️" alt="Warning" /> If you implemented a custom field type, you will need to change it to the new API, see fields in the `@keystone-next/fields` [package](https://github.com/keystonejs/keystone/tree/main/packages/fields) for inspiration on how to do this.
 
 ### Password tweaks <Emoji symbol="🔒" alt="Padlock" />
 
@@ -52,7 +53,7 @@ List level `create`, `update` and `delete` access control is now called for each
 
 This means that rather than receiving `originalInput` as an array with `itemIds`, your access control functions will always be called with just an `itemId` and/or `originalInput` (depending on which access control function it is).
 
-⚠️ If your access control functions already worked with creating/updating/deleting one item, they will continue working (though you may get TypeScript errors if you were previously handling `itemIds` and `originalInput` as an array, to fix that, you should stop handling that case).
+<Emoji symbol="⚠️" alt="Warning" /> If your access control functions already worked with creating/updating/deleting one item, they will continue working (though you may get TypeScript errors if you were previously handling `itemIds` and `originalInput` as an array, to fix that, you should stop handling that case).
 
 In addition, filters returned from access control now go through GraphQL validation and coercion like filters that you pass in through the GraphQL API, this will produce better errors when you return invalid values.
 
@@ -66,7 +67,7 @@ The ordering of relationships fields in the generated Prisma schema has changed 
 
 The name of one-to-one and one-to-many relationships has also changed to include `_` between the list key and field key to align with many-to-many relationships.
 
-⚠️ Note that these changes do **not require a migration**, only your `schema.prisma` file will need to be updated with `keystone-next dev` or `keystone-next postinstall --fix`.
+<Emoji symbol="⚠️" alt="Warning" /> Note that these changes do **not require a migration**, only your `schema.prisma` file will need to be updated with `keystone-next dev` or `keystone-next postinstall --fix`.
 
 ## Text and integer filtering
 
@@ -92,5 +93,12 @@ We've updated our Prisma dependencies to `2.24.1`, check out the [Prisma release
 
 You can also view the [verbose release notes](https://github.com/keystonejs/keystone/releases/tag/2021-06-15) on GitHub.
 
-export default ({ children, ...props }) => <Markdown description="Keystone 6 now has a new core. It’ll now easier for us to ship roadmap features like custom field types, GraphQL Schema extensions, and more." {...props}>{children}</Markdown>;
-export { getStaticProps }
+export default ({ children, ...props }) => (
+  <Markdown
+    description="Keystone 6 now has a new core. It’ll now easier for us to ship roadmap features like custom field types, GraphQL Schema extensions, and more."
+    {...props}
+  >
+    {children}
+  </Markdown>
+);
+export { getStaticProps };

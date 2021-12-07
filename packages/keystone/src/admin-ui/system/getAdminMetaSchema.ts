@@ -1,13 +1,11 @@
-import { GraphQLSchema, GraphQLObjectType, assertScalarType, assertEnumType } from 'graphql';
 import {
-  JSONValue,
   QueryMode,
   KeystoneContext,
   KeystoneConfig,
   AdminMetaRootVal,
   ListMetaRootVal,
   FieldMetaRootVal,
-  ItemRootValue,
+  BaseItem,
 } from '../../types';
 import { graphql as graphqlBoundToKeystoneContext } from '../..';
 
@@ -22,27 +20,17 @@ const graphql = {
 
 export function getAdminMetaSchema({
   config,
-  graphQLSchema,
   lists,
   adminMeta: adminMetaRoot,
 }: {
   adminMeta: AdminMetaRootVal;
   config: KeystoneConfig;
   lists: Record<string, InitialisedList>;
-  graphQLSchema: GraphQLSchema;
 }) {
   const isAccessAllowed =
-    config.session === undefined
-      ? undefined
-      : config.ui?.isAccessAllowed ?? (({ session }) => session !== undefined);
-  const jsonScalarType = graphQLSchema.getType('JSON');
-  const jsonScalar = jsonScalarType
-    ? graphql.scalar<JSONValue>(assertScalarType(jsonScalarType))
-    : graphqlBoundToKeystoneContext.JSON;
-  const queryModeEnumType = graphQLSchema.getType('QueryMode');
-  const queryModeEnum = queryModeEnumType
-    ? { ...QueryMode, graphQLType: assertEnumType(graphQLSchema.getType('QueryMode')) }
-    : QueryMode;
+    config.ui?.isAccessAllowed ??
+    (config.session === undefined ? undefined : ({ session }) => session !== undefined);
+  const jsonScalar = graphqlBoundToKeystoneContext.JSON;
 
   const KeystoneAdminUIFieldMeta = graphql.object<FieldMetaRootVal>()({
     name: 'KeystoneAdminUIFieldMeta',
@@ -126,7 +114,10 @@ export function getAdminMetaSchema({
                   const sessionFunction =
                     lists[rootVal.listKey].fields[rootVal.fieldPath].ui?.createView?.fieldMode ??
                     listConfig.ui?.createView?.defaultFieldMode;
-                  return runMaybeFunction(sessionFunction, 'edit', { session: context.session });
+                  return runMaybeFunction(sessionFunction, 'edit', {
+                    session: context.session,
+                    context,
+                  });
                 },
               }),
             },
@@ -161,7 +152,10 @@ export function getAdminMetaSchema({
                   const sessionFunction =
                     lists[rootVal.listKey].fields[rootVal.fieldPath].ui?.listView?.fieldMode ??
                     listConfig.ui?.listView?.defaultFieldMode;
-                  return runMaybeFunction(sessionFunction, 'read', { session: context.session });
+                  return runMaybeFunction(sessionFunction, 'read', {
+                    session: context.session,
+                    context,
+                  });
                 },
               }),
             },
@@ -225,6 +219,7 @@ export function getAdminMetaSchema({
                   }
                   return runMaybeFunction(sessionFunction, 'edit', {
                     session: context.session,
+                    context,
                     item,
                   });
                 });
@@ -235,7 +230,7 @@ export function getAdminMetaSchema({
         }),
       }),
       search: graphql.field({
-        type: queryModeEnum,
+        type: QueryMode,
       }),
     },
   });
@@ -274,7 +269,10 @@ export function getAdminMetaSchema({
             );
           }
           const listConfig = config.lists[rootVal.key];
-          return runMaybeFunction(listConfig.ui?.hideCreate, false, { session: context.session });
+          return runMaybeFunction(listConfig.ui?.hideCreate, false, {
+            session: context.session,
+            context,
+          });
         },
       }),
       hideDelete: graphql.field({
@@ -286,7 +284,10 @@ export function getAdminMetaSchema({
             );
           }
           const listConfig = config.lists[rootVal.key];
-          return runMaybeFunction(listConfig.ui?.hideDelete, false, { session: context.session });
+          return runMaybeFunction(listConfig.ui?.hideDelete, false, {
+            session: context.session,
+            context,
+          });
         },
       }),
       path: graphql.field({ type: graphql.nonNull(graphql.String) }),
@@ -312,7 +313,10 @@ export function getAdminMetaSchema({
             );
           }
           const listConfig = config.lists[rootVal.key];
-          return runMaybeFunction(listConfig.ui?.isHidden, false, { session: context.session });
+          return runMaybeFunction(listConfig.ui?.isHidden, false, {
+            session: context.session,
+            context,
+          });
         },
       }),
     },
@@ -345,7 +349,7 @@ export function getAdminMetaSchema({
   });
 
   const KeystoneMeta = graphql.nonNull(
-    graphql.object<{ adminMeta: AdminMetaRootVal }>()({
+    graphql.object<{}>()({
       name: 'KeystoneMeta',
       fields: {
         adminMeta: graphql.field({
@@ -367,24 +371,14 @@ export function getAdminMetaSchema({
       },
     })
   );
-  const schemaConfig = graphQLSchema.toConfig();
-  const queryTypeConfig = graphQLSchema.getQueryType()!.toConfig();
-  return new GraphQLSchema({
-    ...schemaConfig,
-    types: schemaConfig.types.filter(x => x.name !== 'Query'),
-    query: new GraphQLObjectType({
-      ...queryTypeConfig,
-      fields: {
-        ...queryTypeConfig.fields,
-        keystone: {
-          type: KeystoneMeta.graphQLType,
-          resolve() {
-            return {};
-          },
-        },
+  return {
+    keystone: graphql.field({
+      type: KeystoneMeta,
+      resolve() {
+        return {};
       },
     }),
-  });
+  };
 }
 
 type FieldIdentifier = { listKey: string; fieldPath: string };
@@ -410,7 +404,7 @@ function fakeAssert<T>(val: any): asserts val is T {}
 const fetchItemForItemViewFieldMode = extendContext(context => {
   type ListKey = string;
   type ItemId = string;
-  const lists = new Map<ListKey, Map<ItemId, Promise<ItemRootValue | null>>>();
+  const lists = new Map<ListKey, Map<ItemId, Promise<BaseItem | null>>>();
   return (listKey: ListKey, id: ItemId) => {
     if (!lists.has(listKey)) {
       lists.set(listKey, new Map());

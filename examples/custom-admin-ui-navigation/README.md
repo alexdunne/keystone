@@ -4,7 +4,7 @@ This project demonstrates how to create a custom Navigation component for use in
 
 ## Instructions
 
-To run this project, clone the Keystone repository locally then navigate to this directory and run:
+To run this project, clone the Keystone repository locally, run `yarn` at the root of the repository then navigate to this directory and run:
 
 ```shell
 yarn dev
@@ -14,7 +14,7 @@ This will start the Admin UI at [localhost:3000](http://localhost:3000).
 
 You can use the Admin UI to create items in your database.
 
-You can also access a Apollo Sandbox at [localhost:3000/api/graphql](http://localhost:3000/api/graphql), which allows you to directly run GraphQL queries and mutations.
+You can also access a GraphQL Playground at [localhost:3000/api/graphql](http://localhost:3000/api/graphql), which allows you to directly run GraphQL queries and mutations.
 
 ## admin/config.ts
 
@@ -39,7 +39,7 @@ The exported components object is expected to have the following type signature:
 Keystone conveniently exports an AdminConfig type for DX.
 
 ```typescript
-import { AdminConfig } from '@keystone-next/keystone/types';
+import { AdminConfig } from '@keystone-6/core/types';
 export const components: AdminConfig['components'] = {
   Logo,
   Navigation,

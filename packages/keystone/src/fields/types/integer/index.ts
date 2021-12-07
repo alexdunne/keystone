@@ -1,6 +1,6 @@
 import { humanize } from '../../../lib/utils';
 import {
-  BaseGeneratedListTypes,
+  BaseListTypeInfo,
   fieldType,
   FieldTypeFunc,
   CommonFieldConfig,
@@ -15,8 +15,8 @@ import {
 } from '../../non-null-graphql';
 import { resolveView } from '../../resolve-view';
 
-export type IntegerFieldConfig<TGeneratedListTypes extends BaseGeneratedListTypes> =
-  CommonFieldConfig<TGeneratedListTypes> & {
+export type IntegerFieldConfig<ListTypeInfo extends BaseListTypeInfo> =
+  CommonFieldConfig<ListTypeInfo> & {
     isIndexed?: boolean | 'unique';
     defaultValue?: number | { kind: 'autoincrement' };
     validation?: {
@@ -34,6 +34,7 @@ export type IntegerFieldConfig<TGeneratedListTypes extends BaseGeneratedListType
     };
     db?: {
       isNullable?: boolean;
+      map?: string;
     };
   };
 
@@ -42,12 +43,12 @@ const MAX_INT = 2147483647;
 const MIN_INT = -2147483648;
 
 export const integer =
-  <TGeneratedListTypes extends BaseGeneratedListTypes>({
+  <ListTypeInfo extends BaseListTypeInfo>({
     isIndexed,
     defaultValue: _defaultValue,
     validation,
     ...config
-  }: IntegerFieldConfig<TGeneratedListTypes> = {}): FieldTypeFunc =>
+  }: IntegerFieldConfig<ListTypeInfo> = {}): FieldTypeFunc<ListTypeInfo> =>
   meta => {
     const defaultValue = _defaultValue ?? null;
     const hasAutoIncDefault =
@@ -124,6 +125,7 @@ export const integer =
           : defaultValue?.kind === 'autoincrement'
           ? { kind: 'autoincrement' }
           : undefined,
+      map: config.db?.map,
     })({
       ...config,
       hooks: {

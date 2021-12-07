@@ -4,9 +4,29 @@ import { Status } from '../../components/primitives/Status';
 
 # Release Notes
 
-## 6th September 2021
+## 1st December 2021
 
 <Status look="latestRelease" />
+
+Keystone 6 has hit **General Availability**! We've shipped some additional improvements since our release candidate last week. <Emoji symbol="🚀" alt="Rocket"/> — [Read more](/releases/2021-12-01)
+
+## 24th November 2021
+
+The **Release Candidate** for Keystone 6 **General Availability** has arrived! Within you’ll find numerous improvements across the project. <Emoji symbol="⭐️" alt="Gold star"/> — [Read more](/releases/2021-11-24)
+
+## 15th November 2021
+
+**Expanded unique filters**, **customisable table and column names support** and a new example featuring **Nexus** as we continue to finalise our GA release. <Emoji symbol="🪢" alt="Rope" /> — [Read more](/releases/2021-11-15)
+
+## 2nd November 2021
+
+**Server-side Live Reloading** is here! <Emoji symbol="🚀" alt="Rocket" /> Plus more updates as we finalise the Keystone 6 GA release. — [Read more](/releases/2021-11-02)
+
+## 5th October 2021
+
+We're nearly at **Gold Master** status for the Keystone 6 GA release! In this release we have a **Fields Overhaul**, **Hook Updates**, **Improved Messaging**, and **much more**! <Emoji symbol="🚀" alt="Rocket" /> — [Read more](/releases/2021-10-05)
+
+## 6th September 2021
 
 Edging ever closer to General Availability for Keystone 6, this release includes a **better Access Control API** <Emoji symbol="✨" alt="Sparkles" />, **customisable Express App** <Emoji symbol="🗺️" alt="map" />, **customisable GraphQL Paths** <Emoji symbol="🚏" alt="signpost" /> and more... — [Read more](/releases/2021-09-06)
 
@@ -82,9 +102,13 @@ Added support for SQLite with Prisma <Emoji symbol="🎉" alt="Celebration"/>, N
 
 Prisma migrations <Emoji symbol="🚚" alt="Truck"/>, Noteworthy bug-squashing <Emoji symbol="🐛" alt="Bug"/> — [Read more](/releases/2021-03-22)
 
-<br/>
+<br />
 
 ?> 🔎 You can also find all the **Keystone 6** releases on [GitHub](https://github.com/keystonejs/keystone/releases)!
 
-export default ({ children, ...props }) => <Markdown description="A complete timeline of KeystoneJS releases." {...props} noRightNav>{children}</Markdown>;
-export { getStaticProps }
+export default ({ children, ...props }) => (
+	<Markdown description="A complete timeline of KeystoneJS releases." {...props} noRightNav>
+		{children}
+	</Markdown>
+);
+export { getStaticProps };

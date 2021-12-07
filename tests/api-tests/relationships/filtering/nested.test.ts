@@ -1,6 +1,6 @@
-import { text, relationship } from '@keystone-next/keystone/fields';
-import { setupTestRunner } from '@keystone-next/keystone/testing';
-import { list } from '@keystone-next/keystone';
+import { text, relationship } from '@keystone-6/core/fields';
+import { setupTestRunner } from '@keystone-6/core/testing';
+import { list } from '@keystone-6/core';
 import { apiTestConfig } from '../../utils';
 
 type IdType = any;
@@ -46,13 +46,11 @@ describe('relationship filtering', () => {
     })
   );
 
-  // this is failing on GitHub Actions rn for some unknown reason so going to disable it for now
-  // eslint-disable-next-line jest/no-disabled-tests
-  test.skip(
+  test(
     'nested to-many relationships can be limited',
     runner(async ({ context }) => {
       const ids = await context.query.Post.createMany({
-        data: [{ content: 'Hello world' }, { content: 'hi world' }, { content: 'Hello? Or hi?' }],
+        data: [{ content: 'Hello world' }, { content: 'hi world' }, { content: 'Hellox Or hi?' }],
       });
 
       const [user, user2] = await context.query.User.createMany({

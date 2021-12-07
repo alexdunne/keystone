@@ -1,34 +1,36 @@
+/** @jsxRuntime classic */
 /** @jsx jsx  */
 import { MDXProvider } from '@mdx-js/react';
 import { jsx } from '@emotion/react';
-import { ReactNode } from 'react';
+import { ReactComponentElement } from 'react';
 
 import { H1, H2, H3, H4, H5, H6 } from '../components/docs/Heading';
-import { Code, InlineCode } from '../components/primitives/Code';
+import { CodeBlock } from '../components/primitives/Code';
 import { getHeadings } from '../lib/getHeadings';
 import { DocsPage } from '../components/Page';
 
 export const components = {
-  code: Code,
+  code: CodeBlock,
   h1: H1,
   h2: H2,
   h3: H3,
   h4: H4,
   h5: H5,
   h6: H6,
-  inlineCode: InlineCode,
 };
 
 export function Markdown({
   children,
   description,
+  title,
   ...props
 }: {
-  children: ReactNode;
+  children: ReactComponentElement<any>;
   description: string;
+  title?: string;
 }) {
-  const headings = getHeadings(children);
-  const firstHeading = headings[0]?.label;
+  const headings = getHeadings(children.type().props.children);
+  const firstHeading = title || headings[0]?.label;
 
   if (!firstHeading) {
     throw new Error('The DocsPage component requires a `title` prop');
@@ -40,6 +42,7 @@ export function Markdown({
 
   return (
     <DocsPage headings={headings} title={firstHeading} description={description} {...props}>
+      {/* @ts-ignore */}
       <MDXProvider components={components}>{children}</MDXProvider>
     </DocsPage>
   );

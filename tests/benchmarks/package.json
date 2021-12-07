@@ -1,20 +1,20 @@
 {
-  "name": "@keystone-next/benchmarks-legacy",
+  "name": "@keystone-6/benchmarks-legacy",
   "description": "A set of benchmarks for running against the KeystoneJS API.",
   "private": true,
-  "version": "7.0.9",
+  "version": "0.0.1",
   "author": "The KeystoneJS Development Team",
   "license": "MIT",
   "engines": {
-    "node": "^12.20 || >= 14.13"
+    "node": "^14.15 || ^16.13"
   },
   "scripts": {
     "go": "node fixtures/index.js"
   },
-  "repository": "https://github.com/keystonejs/keystone/tree/master/tests/benchmarks",
+  "repository": "https://github.com/keystonejs/keystone/tree/main/tests/benchmarks",
   "homepage": "https://github.com/keystonejs/keystone",
   "dependencies": {
-    "@keystone-next/keystone": "^26.0.0",
+    "@keystone-6/core": "^1.0.0",
     "cookie-signature": "^1.1.0",
     "testcheck": "^1.0.0-rc.2"
   }

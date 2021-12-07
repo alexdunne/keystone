@@ -1,0 +1,21 @@
+{
+  "name": "@keystone-6/example-extend-graphql-schema-nexus",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "keystone dev",
+    "start": "keystone start",
+    "build": "keystone build"
+  },
+  "dependencies": {
+    "@graphql-tools/schema": "^8.3.1",
+    "@keystone-6/core": "^1.0.0",
+    "graphql": "^15.7.2",
+    "nexus": "^1.1.0"
+  },
+  "engines": {
+    "node": "^14.15 || ^16.13"
+  },
+  "repository": "https://github.com/keystonejs/keystone/tree/main/examples/extend-graphql-schema-nexus"
+}

@@ -24,7 +24,7 @@ test("start errors when a build hasn't happened", async () => {
   await expect(runCommand(tmp, 'start')).rejects.toEqual(new ExitError(1));
   expect(recording()).toMatchInlineSnapshot(`
     "✨ Starting Keystone
-    🚨 keystone-next build must be run before running keystone-next start"
+    🚨 keystone build must be run before running keystone start"
   `);
 });
 
@@ -37,8 +37,8 @@ test('build works with typescript without the user defining a babel config', asy
     ...symlinkKeystoneDeps,
     ...schemas,
     'keystone.ts': js`
-                     import { config, list } from "@keystone-next/keystone";
-                     import { text } from "@keystone-next/keystone/fields";
+                     import { config, list } from "@keystone-6/core";
+                     import { text } from "@keystone-6/core/fields";
 
                      type x = string;
 
@@ -78,7 +78,6 @@ test('build works with typescript without the user defining a babel config', asy
     ✨ Generating Admin UI code
     ✨ Generating Keystone config code
     ✨ Building Admin UI
-    info  - Using webpack 5. Reason: Enabled by default https://nextjs.org/docs/messages/webpack5
     info  - Skipping validation of types...
     info  - Creating an optimized production build...
     info  - Compiled successfully
@@ -91,8 +90,6 @@ test('build works with typescript without the user defining a babel config', asy
     next build size report
     λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
     ○  (Static)  automatically rendered as static HTML (uses no initial props)
-    ●  (SSG)     automatically generated as static HTML + JSON (uses getStaticProps)
-       (ISR)     incremental static regeneration (uses revalidate in getStaticProps)
     "
   `);
   expect(result.exitCode).toBe(0);

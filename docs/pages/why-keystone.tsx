@@ -1,3 +1,4 @@
+/** @jsxRuntime classic */
 /** @jsx jsx  */
 import { jsx } from '@emotion/react';
 import Image from 'next/image';
@@ -60,10 +61,14 @@ export default function WhyKeystonePage() {
         >
           <div>
             <Type as="p" look="body18" color="var(--muted)" margin="0 0 1rem 0">
-              Keystone is a <a href="https://thinkmill.com.au">Thinkmill</a> product. We’ve spent
-              years shipping sophisticated solutions for large companies like Atlassian, Samsung,
-              Qantas, Breville, and the Australian Government. We’ve also helped startups get off
-              the ground in a way that lets them deliver immediate value and change as they learn.
+              Keystone is a{' '}
+              <a href="https://thinkmill.com.au" target="_blank" rel="noopener noreferrer">
+                Thinkmill
+              </a>{' '}
+              product. We’ve spent years shipping sophisticated solutions for large companies like
+              Atlassian, Samsung, Qantas, Breville, and the Australian Government. We’ve also helped
+              startups get off the ground in a way that lets them deliver immediate value and change
+              as they learn.
             </Type>
             <Type as="p" look="body18" color="var(--muted)" margin="0 0 1rem 0">
               Keystone solves for this spectrum of needs in a way that other backend tools and
@@ -347,7 +352,7 @@ export default function WhyKeystonePage() {
               </Type>
               <Type as="p" look="body18">
                 <a
-                  href="https://github.com/keystonejs/keystone/tree/master/examples/extend-graphql-schema"
+                  href="https://github.com/keystonejs/keystone/tree/main/examples/extend-graphql-schema"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -552,7 +557,7 @@ export default function WhyKeystonePage() {
               </Type>
               <Type as="p" look="body18">
                 <a
-                  href="https://github.com/keystonejs/keystone/tree/master/examples/task-manager"
+                  href="https://github.com/keystonejs/keystone/tree/main/examples/task-manager"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -575,7 +580,7 @@ export default function WhyKeystonePage() {
               </Type>
               <Type as="p" look="body18">
                 <a
-                  href="https://github.com/keystonejs/keystone/tree/master/examples/blog"
+                  href="https://github.com/keystonejs/keystone/tree/main/examples/blog"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -604,7 +609,7 @@ export default function WhyKeystonePage() {
             </Type>
             <Type as="p" look="body18">
               <a
-                href="https://github.com/keystonejs/keystone/tree/master/examples-staging/ecommerce"
+                href="https://github.com/keystonejs/keystone/tree/main/examples-staging/ecommerce"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -645,7 +650,7 @@ export default function WhyKeystonePage() {
             <Type as="p" look="body18" color="var(--muted)" margin="1rem 0 0 0">
               Use an API-first content platform to unlocks the power of multichannel content ops.
               Connect to your audience where they want to be. Ship content to any frontend over
-              performant APIs. Use the built-in Apollo Sandbox to query with ease.
+              performant APIs. Use the built-in GraphQL Playground to query with ease.
             </Type>
           </div>
           <TweetBox
