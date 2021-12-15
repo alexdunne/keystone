@@ -1,5 +1,17 @@
 # @keystone-next/keystone
 
+## 1.0.1
+
+### Patch Changes
+
+- [#7064](https://github.com/keystonejs/keystone/pull/7064) [`54c056c58`](https://github.com/keystonejs/keystone/commit/54c056c58af60d2ab86fd5590df5544e0a0132f9) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Refactoring of TypeScript type generation
+
+* [#7029](https://github.com/keystonejs/keystone/pull/7029) [`53f3ca6fd`](https://github.com/keystonejs/keystone/commit/53f3ca6fdbef16b305a41240f107754ad6823ff7) Thanks [@rohan-deshpande](https://github.com/rohan-deshpande)! - Explicitly disable caching for redirect responses in the Admin UI
+
+- [#7052](https://github.com/keystonejs/keystone/pull/7052) [`911972098`](https://github.com/keystonejs/keystone/commit/911972098c1bdaa6e64a7aee028b3446e00106e5) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fixed setting `db.enableLogging` to `false` erroring
+
+* [#7065](https://github.com/keystonejs/keystone/pull/7065) [`8c7a54453`](https://github.com/keystonejs/keystone/commit/8c7a54453e740906c18222244f86c3d59ddd54a4) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Removed `fast-glob` dependency
+
 ## 1.0.0
 
 ### Major Changes
